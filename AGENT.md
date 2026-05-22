@@ -12,6 +12,8 @@ Agent는 사용자와의 대화를 통해 프로젝트 성격과 요구사항을
 > 3. 사용자가 선택한 항목들만 조합하여 `.ai.dev/DECISIONS.md`에 기록하고, 해당 범위 내에서만 코드를 작성합니다.
 >
 > **AI 응답 언어 원칙**: Agent는 사용자가 사용한 언어로 응답합니다. Q0 이전에 사용자의 언어를 감지하고, 이후 모든 답변·문서 초안을 해당 언어로 작성합니다.
+>
+> **대상 환경**: Claude Code CLI, Codex, opencode 등 파일 접근이 가능한 CLI 기반 Agent 환경을 기준으로 합니다. (`file_access: true`, 프로젝트 폴더 열린 상태)
 
 ---
 
@@ -24,15 +26,23 @@ Agent가 생성하거나 관리하는 모든 파일은 **프로젝트 루트의 
 ```
 <project-root>/
 └── .ai.dev/
-    ├── DECISIONS.md          ← 프로젝트 결정 및 ADR
-    ├── ARCHITECTURE.md       ← 아키텍처 다이어그램 및 계층 설명
-    ├── API_REFERENCE.md      ← API 엔드포인트 및 스키마 (OpenAPI 미사용 시)
-    ├── DATABASE_SCHEMA.md    ← ERD 및 마이그레이션 이력
-    ├── TESTING.md            ← 테스트 실행법 및 커버리지 현황
-    ├── SECURITY.md           ← 보안 정책, 인증·인가 방식
+    ├── AGENT_CONFIG.md        ← 모델·환경 설정 (최초 1회 자동 생성)
+    ├── CODEBASE_PROFILE.md    ← 코드베이스 프로파일 캐시
+    ├── context/               ← 컨텍스트 관리 폴더
+    │   ├── SUMMARY.md         ← 전체 대화 압축 요약 (항상 최신)
+    │   ├── INDEX.md           ← 아카이브 전체 인덱스
+    │   └── archive/
+    │       ├── session_YYYYMMDD_001.md
+    │       └── ...
+    ├── DECISIONS.md           ← 프로젝트 결정 및 ADR
+    ├── ARCHITECTURE.md        ← 아키텍처 다이어그램 및 계층 설명
+    ├── API_REFERENCE.md       ← API 엔드포인트 및 스키마 (OpenAPI 미사용 시)
+    ├── DATABASE_SCHEMA.md     ← ERD 및 마이그레이션 이력
+    ├── TESTING.md             ← 테스트 실행법 및 커버리지 현황
+    ├── SECURITY.md            ← 보안 정책, 인증·인가 방식
     ├── FRAMEWORK_GUIDELINES.md ← 프레임워크 핵심 규칙 요약
-    ├── ERRORS.md             ← 에러 코드 사전 정의 목록
-    └── CHANGELOG.md          ← 버전별 변경 이력
+    ├── ERRORS.md              ← 에러 코드 사전 정의 목록
+    └── CHANGELOG.md           ← 버전별 변경 이력
 ```
 
 > **규칙**
@@ -92,6 +102,128 @@ Agent는 단순히 코드를 생성하는 것을 넘어, **계획-실행-검증-
 | 2 | 공식 블로그·릴리즈 노트 | github.com/releases |
 | 3 | 검증된 커뮤니티 | MDN, Stack Overflow 상위 답변 |
 | 4 | 기타 | 블로그, 개인 문서 (출처 반드시 명시) |
+
+---
+
+## 에이전트 환경 설정 (Agent Environment Configuration)
+
+> **목적**: 모델 자신의 컨텍스트 크기를 최초 1회 확정하여 파일에 저장하고, 이후 모든 컨텍스트 관리 판단의 기준값으로 사용합니다. 한 번 저장된 값은 다시 묻지 않습니다.
+
+### 최초 실행 시 자동 환경 감지
+
+프로젝트 시작 시 `.ai.dev/AGENT_CONFIG.md`가 없으면 아래를 순서대로 실행합니다.
+
+#### Step 1 — 자가 식별 (Self-Identification)
+
+Agent는 먼저 스스로 자신을 식별하고 공개 스펙을 조회합니다. 아래 룩업 테이블을 사용합니다.
+
+| 모델 | 최대 컨텍스트 | 실용 임계값 (80%) | 경고 임계값 (70%) |
+|------|-------------|-----------------|-----------------|
+| Claude Opus 4.6 / Sonnet 4.6 | 200,000 | 160,000 | 140,000 |
+| Claude Haiku 4.5 | 200,000 | 160,000 | 140,000 |
+| GPT-4o / GPT-4o mini | 128,000 | 102,400 | 89,600 |
+| o1 / o3 / o4-mini | 128,000 | 102,400 | 89,600 |
+| DeepSeek-V3 / R1 | 128,000 | 102,400 | 89,600 |
+| Gemini 1.5 Pro | 1,000,000 | 800,000 | 700,000 |
+| Gemini 2.0 Flash | 1,000,000 | 800,000 | 700,000 |
+| GLM-4 | 128,000 | 102,400 | 89,600 |
+| Llama 3.1 / 3.3 70B+ | 128,000 | 102,400 | 89,600 |
+| Qwen2.5 72B+ | 128,000 | 102,400 | 89,600 |
+| 기타 / 알 수 없음 | 보수적 기본값 적용 | 80,000 | 70,000 |
+
+#### Step 2 — 사용자에게 1회 확인
+
+자신의 모델명을 특정할 수 없거나, 운영자가 컨텍스트를 별도 제한했을 수 있는 경우에만 아래 질문을 합니다. **(Q0 이전에 단독으로 질문합니다.)**
+
+```
+[환경 설정] 최초 1회 확인이 필요합니다.
+
+① 모델명: (예: Claude Sonnet 4.6 / GPT-4o / DeepSeek-V3)
+   → 모르시면 "모름" — 보수적 기본값(80K)을 적용합니다.
+
+② 운영자 컨텍스트 제한 여부:
+   - max_tokens를 별도로 제한했다면 그 값을 알려주세요.
+   - 없으면 "기본값"이라고 하세요.
+
+이 정보는 .ai.dev/AGENT_CONFIG.md에 저장되며 다시 묻지 않습니다.
+```
+
+#### Step 3 — AGENT_CONFIG.md 생성
+
+```markdown
+# Agent Configuration
+<!-- auto-generated — use `reconfigure agent` to update -->
+<!-- created: YYYY-MM-DDTHH:MM:SSZ -->
+
+## Model Identity
+- model_name: (감지 또는 사용자 입력값)
+- self_identified: true/false
+- user_confirmed: true/false
+
+## Context Window
+- max_tokens: (공개 스펙값)
+- operator_limit: null
+- effective_max: (min(max_tokens, operator_limit))
+- compression_threshold: (effective_max × 0.80)
+- warning_threshold: (effective_max × 0.70)
+
+## Execution Environment
+- environment: cli
+- file_access: true
+- context_compression: enabled
+
+## Calibration
+- avg_tokens_per_exchange: 800
+- system_prompt_tokens: 20000
+- calibration_count: 0
+```
+
+### 실시간 토큰 사용량 추정
+
+정확한 측정은 불가하므로 저장된 설정 기반으로 **합리적 추정**을 사용합니다.
+
+```
+현재 사용 토큰 추정 ≈
+  system_prompt_tokens              (AGENT_CONFIG에서 로드)
+  + (교환 횟수 × avg_tokens_per_exchange)
+  + (코드 블록 수 × 500)            (블록당 추가 추정)
+  + SUMMARY.md 로드 토큰            (파일 크기 ÷ 4)
+  + CODEBASE_PROFILE.md 로드 토큰   (파일 크기 ÷ 4)
+
+여유 토큰 ≈ effective_max - 현재 사용 토큰 추정값
+```
+
+**단계별 경고 시스템:**
+
+| 상태 | 조건 | Agent 행동 |
+|------|------|-----------|
+| 🟢 정상 | 여유 > 30% | 아무 표시 없음 |
+| 🟡 주의 | 여유 ≤ 30% (warning_threshold) | "컨텍스트 70% 사용 추정 — 압축 권장" 알림, 현재 작업 완료 후 제안 |
+| 🔴 긴급 | 여유 ≤ 20% (compression_threshold) | "컨텍스트 80% 사용 추정 — 즉시 압축 권장" 알림, 응답 후 자동 압축 절차 시작 |
+
+### 보정 메커니즘 (Calibration)
+
+```
+보정 트리거:
+  - 압축 실행 후 아카이브 파일 크기 확인 가능 시
+  - 사용자가 `calibrate tokens` 명령어 실행 시
+  - 컨텍스트 관련 오류 발생 시
+
+보정 공식:
+  avg_tokens_per_exchange =
+    (기존 avg × calibration_count + 새 측정값) ÷ (calibration_count + 1)
+
+보정 후 AGENT_CONFIG.md Calibration 섹션 업데이트
+```
+
+### 환경 설정 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `reconfigure agent` | AGENT_CONFIG.md 재설정 (모델 변경 시 사용) |
+| `show agent config` | 현재 설정값 출력 |
+| `show token estimate` | 현재 토큰 사용량 추정값 출력 |
+| `calibrate tokens` | 보정값 수동 업데이트 |
 
 ---
 
@@ -576,6 +708,297 @@ ORM:        Ecto
 
 ---
 
+## 코드베이스 프로파일 캐시 (Codebase Profile Cache)
+
+> **목적**: 코드 수정 요청 시 매번 전체 스캔하는 낭비를 없애고, 최초 스캔 결과를 파일로 누적·관리하여 이후에는 파일을 읽는 것만으로 즉시 정확한 컨텍스트를 확보합니다.
+>
+> **원칙**: 스캔은 최초 1회, 이후는 변경분만 업데이트. 의심될 때만 재스캔.
+
+### CODEBASE_PROFILE.md 파일 형식
+
+```markdown
+# Codebase Profile
+<!-- auto-generated by Agent — do not edit manually -->
+<!-- last_full_scan: YYYY-MM-DDTHH:MM:SSZ -->
+<!-- last_updated: YYYY-MM-DDTHH:MM:SSZ -->
+<!-- profile_version: N -->
+
+## 1. Stack & Versions
+| 항목 | 현재 버전 | 감지 출처 |
+|------|-----------|-----------|
+| (예) Bootstrap | 4.6.2 | index.html CDN |
+| (예) React | 18.2.0 | package.json |
+
+## 2. File Structure Map
+| 경로 | 역할 | 주요 export/심볼 |
+|------|------|----------------|
+| (예) src/components/Header/ | 헤더 컴포넌트 | Header, NavBar |
+| (예) src/services/auth/ | 인증 로직 | AuthService, useAuth |
+
+## 3. Conventions
+
+### 네이밍
+- (예) 컴포넌트: PascalCase
+- (예) 훅: use + PascalCase
+- (예) CSS 클래스: BEM
+
+### 포맷
+- (예) 들여쓰기: 2칸 공백
+- (예) 따옴표: 싱글 (JS/TS)
+- (예) 세미콜론: 있음
+
+### 구조 패턴
+- (예) 상태 관리: Redux Toolkit (전역), useState (로컬)
+- (예) 에러 처리: ErrorBoundary + toast
+
+## 4. Protected Symbols
+| 심볼 | 위치 | 이유 |
+|------|------|------|
+| (예) AuthService.login() | src/services/auth/ | 7개 컴포넌트 참조 |
+| (예) --color-primary | src/styles/variables.css | 전체 테마 기준값 |
+
+## 5. Dependency Graph (Key Modules)
+(핵심 모듈 간 의존 관계 — 텍스트 다이어그램)
+
+## 6. Known Constraints
+- (예) IE11 미지원: CSS 변수 자유롭게 사용 가능
+- (예) SSR 없음: window, document 직접 접근 가능
+
+## 7. Stale Markers
+| 항목 | 마지막 확인 | 변경 가능성 |
+|------|------------|------------|
+| package.json dependencies | last_full_scan | 낮음 |
+| Protected Symbols | last_updated | 중간 |
+```
+
+### 프로파일 생명주기
+
+#### 생성 (최초 1회)
+
+아래 중 하나에 해당할 때 전체 스캔 후 파일을 생성합니다.
+
+- 프로젝트 최초 실행 시 (`.ai.dev/` 초기화와 동시에)
+- `CODEBASE_PROFILE.md`가 없는데 코드 수정 요청이 들어올 때
+- 사용자가 `rebuild codebase profile` 명령어 실행 시
+
+#### 읽기 (매 수정 요청마다)
+
+```
+1. .ai.dev/CODEBASE_PROFILE.md 존재 확인
+   → 없으면: 전체 스캔 → 파일 생성 → 진행
+   → 있으면: 파일 로드 (재스캔 없음)
+
+2. 신선도 확인
+   → 수정 대상 파일이 last_updated 이후 변경? → 부분 재스캔
+   → 최신 상태? → 즉시 사용
+
+3. 사용자 출력
+   → 정상: "[프로파일 v{N} 로드] 스택: {주요 항목}"  (한 줄)
+   → 재스캔: "[부분 재스캔 완료] {이유} — 프로파일 업데이트됨"
+   → 신규: "[프로파일 생성 완료] .ai.dev/CODEBASE_PROFILE.md 저장"
+```
+
+#### 업데이트 트리거 (코드 변경 후 자동)
+
+| 변경 유형 | 업데이트 대상 섹션 |
+|-----------|------------------|
+| 패키지 추가/제거 | §1 Stack & Versions |
+| 새 파일/디렉토리 생성 | §2 File Structure Map |
+| 새 공개 함수/클래스 추가 | §2 + §4 Protected Symbols 후보 |
+| 네이밍 패턴 변경 | §3 Conventions |
+| 버전 업그레이드 | §1 Stack & Versions |
+| 기존 심볼 참조 증가 | §4 Protected Symbols |
+| 의존성 구조 변경 | §5 Dependency Graph |
+
+업데이트 후 `last_updated`, `profile_version` 갱신 필수.
+
+#### 재스캔 기준
+
+| 상황 | 처리 |
+|------|------|
+| 프로파일 파일 없음 | 전체 재스캔 필수 |
+| 사용자 명시 요청 | 전체 또는 부분 재스캔 |
+| 대규모 리팩토링 완료 | 전체 재스캔 권장 |
+| §4 Protected Symbols 포함 파일 수정 | 해당 심볼 재검증 |
+| 단순 로직 수정 (구조·컨벤션 불변) | 재스캔 없음, §7만 업데이트 |
+
+### 프로파일 관련 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `build codebase profile` | 전체 스캔 → CODEBASE_PROFILE.md 생성 |
+| `rebuild codebase profile` | 기존 폐기 후 처음부터 재생성 |
+| `update codebase profile for <파일/모듈>` | 지정 범위만 부분 재스캔 후 업데이트 |
+| `show codebase profile` | 현재 프로파일 요약 출력 |
+| `check profile freshness` | 신선도 보고서 출력 (🟢/🟡/🔴) |
+
+---
+
+## 코드 수정 실행 프로토콜 (Code Modification Execution Protocol)
+
+> **목적**: 추상적·모호한 수정 요청에서도 전체 코드 구조를 보존하고 의도에 정확히 부합하는 결과를 만들기 위한 강제 실행 절차입니다.
+>
+> **적용 범위**: 코드 수정이 포함된 모든 요청에 의무 적용. 단, `CODEBASE_PROFILE.md`가 존재하면 Phase 0은 파일 로드로 대체합니다.
+
+### Phase 0 — 프로파일 로드 (PROFILE LOAD)
+
+```
+① CODEBASE_PROFILE.md 존재 확인
+   → 없음: "프로파일 없음 — 전체 스캔을 실행합니다." 출력 후 스캔·생성
+   → 있음: 파일 로드
+
+② 신선도 확인
+   → 최신: "[프로파일 v{N} 로드]" 한 줄 출력 후 즉시 진행
+   → 오래됨: 해당 파일 부분 재스캔 → 업데이트 → 진행
+
+③ PRE-SCAN 전체를 채팅에 출력하는 것은 금지
+   → 프로파일이 존재하면 한 줄 요약만 출력, 내용은 내부 활용만
+```
+
+### Phase 1 — 추상 지시 분해 (Abstract Instruction Decomposition)
+
+#### 추상 지시 판별 기준
+
+아래 중 하나라도 해당하면 추상 지시로 분류합니다.
+
+- 미적 판단 포함: "이쁘게", "깔끔하게", "현대적으로"
+- 버전/마이그레이션: "최신 버전으로", "업그레이드", "전환"
+- 범위 미지정 구조 변경: "구조 개선", "리팩토링", "정리해줘"
+- 다중 해석 가능: "맞춰줘", "통일해줘", "고쳐줘"
+
+#### 분해 절차 출력 형식
+
+```
+[INSTRUCTION DECOMPOSITION]
+원본 요청: "<사용자 요청 그대로>"
+
+해석된 의도:
+  (핵심 목표를 한 문장으로)
+
+구체적 작업 목록:
+  1. [파일:범위] — 수행할 내용
+  2. [파일:범위] — 수행할 내용
+  ...
+
+포함되지 않는 것:
+  - (요청에 명시되지 않아 수정하지 않는 범위)
+
+모호한 부분 (확인 필요):
+  - (해석이 두 가지 이상 가능한 항목 — 확인 전 해당 작업 보류)
+
+위 목록으로 진행해도 될까요?
+```
+
+> **규칙**: 모호한 부분이 있으면 해당 작업만 보류하고 명확한 항목부터 진행하거나, 먼저 사용자 확인을 받습니다.
+
+### Phase 2 — 수정 범위 경계 선언 (Scope Boundary Declaration)
+
+```
+[SCOPE DECLARATION]
+수정 O: (파일명, 함수명, 클래스명, 라인 범위)
+수정 X: (이유와 함께 명시)
+보존 필수: (다른 모듈이 참조 중인 심볼, API 계약, 전역 상태)
+```
+
+#### 범위 침범 방지 규칙
+
+| 상황 | 금지 행동 | 허용 행동 |
+|------|-----------|-----------|
+| 스타일 수정 요청 | JS 로직·함수명 변경 | CSS·클래스명만 수정 |
+| 버전 업그레이드 | 요청 외 컴포넌트 재설계 | breaking change만 처리 |
+| 특정 컴포넌트 수정 | 공통 레이아웃 구조 변경 | 해당 컴포넌트 내부만 |
+| 버그 수정 | 관련 없는 코드 리팩토링 병행 | 버그 원인 코드와 직접 파급 범위만 |
+
+> 수정 중 범위 밖을 건드려야 하는 상황이 발견되면 **즉시 멈추고** 사용자에게 보고 후 승인을 받습니다.
+
+### Phase 3 — 버전·프레임워크 변경 체크리스트
+
+버전 업그레이드나 프레임워크 전환이 포함된 경우 필수 적용합니다.
+
+```
+[VERSION MIGRATION CHECKLIST]
+AS-IS: (코드에서 감지한 현재 버전)
+TO-BE: (목표 버전 — 미지정 시 사용자에게 명시 요청)
+
+Breaking Changes:
+  ① Deprecated/제거된 API:
+  ② 네이밍 변경: (before → after)
+  ③ 의존성 변경: (추가/제거/버전 고정)
+  ④ 설정 파일 변경:
+  ⑤ 동작 방식 변경:
+
+불확실한 항목:
+  - (공식 마이그레이션 가이드 웹 검색 후 확인 필요 항목)
+```
+
+> **규칙**: "최신 버전" 요청 시 버전 번호를 특정하지 않고 진행하는 것은 금지합니다. 공식 docs/changelog/release notes를 검색하여 확인 후 적용합니다.
+
+### Phase 4 — 수정 후 자기검증 (Self-Verification)
+
+코드 출력 전 아래 체크리스트를 내부적으로 수행합니다. 실패 항목이 있으면 수정 후 출력합니다.
+
+```
+□ CODEBASE_PROFILE §3 컨벤션(네이밍, 포맷, 주석 스타일)을 유지했는가?
+□ SCOPE DECLARATION의 "수정 X" 항목을 건드리지 않았는가?
+□ INSTRUCTION DECOMPOSITION의 작업 목록을 빠짐없이 처리했는가?
+□ 새로운 외부 의존성을 무단으로 추가하지 않았는가?
+□ 버전 변경 시 Breaking Changes 목록을 모두 반영했는가?
+□ 기존에 동작하던 기능이 깨질 가능성이 있는가?
+   → 있으면: 사용자에게 알리고 대안 제시
+```
+
+#### 수정 완료 보고 형식
+
+```
+[MODIFICATION SUMMARY]
+✅ 완료된 작업:
+  - (작업 1): (파일:범위) — (수행 내용)
+
+🔒 보존된 항목:
+  - (의도적으로 유지한 코드·구조·컨벤션)
+
+⚠️ 주의 사항 (있는 경우):
+  - (추가 확인이 필요한 사항)
+
+📋 미처리 항목 (있는 경우):
+  - (모호하여 보류한 작업 — 확인 후 이어서 진행 가능)
+```
+
+### Phase 5 — 컨벤션 불일치 감지 및 경고
+
+수정 중 기존 코드와 충돌하는 패턴이 발견되면 즉시 보고합니다.
+
+#### 감지 대상
+
+| 항목 | 감지 예시 |
+|------|-----------|
+| 네이밍 충돌 | 기존 `getUserById` 패턴인데 `fetchUser` 사용 |
+| 스타일 불일치 | CSS 변수 사용 중인데 하드코딩 색상 삽입 |
+| 컴포넌트 구조 일탈 | 단일 책임 컴포넌트에 로직 혼재 |
+| 임포트 방식 불일치 | 기존 named import인데 default import 사용 |
+| 에러 처리 방식 불일치 | 기존 Result 패턴인데 throw 사용 |
+
+#### 보고 형식
+
+```
+🟡 CONVENTION MISMATCH 감지
+위치: (파일명:라인)
+기존 패턴: (감지된 기존 패턴)
+현재 작성: (충돌하는 새 코드)
+권장: 기존 컨벤션에 맞게 (수정 방향 제안)
+자동 수정할까요?
+```
+
+### 코드 수정 관련 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `analyze before modify <파일/기능>` | PRE-SCAN 수행 → 컨벤션·의존관계·수정 금지 범위 출력 → 확인 후 수정 |
+| `check conventions in <파일명>` | 파일 컨벤션 분석 → 프로젝트 전체와 불일치 항목 보고 |
+| `migration plan <현재버전> to <목표버전>` | 공식 가이드 검색 → Breaking Changes 목록 → 영향 파일 목록 → 단계별 실행 |
+
+---
+
 ## 위험 방지 규칙
 
 .env 파일은 절대로 읽지 않습니다. 만일 .env 내용이 필요한 경우 사용자에게 .env의 키 값만 들어가 있는 .env.example 생성을 요청합니다.
@@ -912,6 +1335,8 @@ main (항상 배포 가능)
 | 문서 | 위치 | 내용 | 갱신 트리거 |
 |------|------|------|-------------|
 | `README.md` | 프로젝트 루트 | 개요, 실행 방법, 환경 변수 | 초기·구조 변경 (사람이 관리) |
+| `AGENT_CONFIG.md` | `.ai.dev/` | 모델·환경 설정 | 최초 1회 자동 생성, `reconfigure agent` 시 |
+| `CODEBASE_PROFILE.md` | `.ai.dev/` | 코드베이스 프로파일 캐시 | 코드 변경 시 자동 업데이트 |
 | `DECISIONS.md` | `.ai.dev/` | 사용자 선택, ADR, 버그 수정 의도 기록 | 결정 변경, 버그 수정 |
 | `ARCHITECTURE.md` | `.ai.dev/` | 다이어그램, 계층, ADR | 새 모듈·패턴 변경 |
 | `API_REFERENCE.md` (또는 OpenAPI) | `.ai.dev/` | 엔드포인트, 스키마 | API 변경 |
@@ -921,6 +1346,8 @@ main (항상 배포 가능)
 | `FRAMEWORK_GUIDELINES.md` | `.ai.dev/` | 프레임워크 핵심 규칙 요약 | 프레임워크 변경 |
 | `ERRORS.md` | `.ai.dev/` | 에러 코드 사전 정의 목록 | 새 에러 코드 추가 |
 | `CHANGELOG.md` | `.ai.dev/` | 버전별 변경 이력 (Keep a Changelog 형식) | 모든 릴리즈 |
+| `SUMMARY.md` | `.ai.dev/context/` | 전체 대화 압축 요약 | 컨텍스트 압축 시 |
+| `INDEX.md` | `.ai.dev/context/` | 아카이브 전체 인덱스 | 아카이브 생성 시 |
 
 ### 다이어그램 as Code
 
@@ -1256,12 +1683,165 @@ Agent는 선택된 프레임워크의 **공식·커뮤니티 표준 가이드라
 
 ---
 
+## 컨텍스트 관리 및 대화 압축 (Context Lifecycle Management)
+
+> **목적**: 대화가 길어져 컨텍스트 한계에 근접할 때, 전체 내용을 파일로 보존하고 압축본·인덱스를 생성하여 이후 세션에서도 프로젝트 연속성을 유지합니다.
+
+### 압축 실행 조건 (휴리스틱)
+
+아래 중 하나라도 해당하면 Agent는 압축을 제안하거나 실행합니다.
+
+| 조건 | 기준 | 처리 |
+|------|------|------|
+| 교환 횟수 | 현재 세션 20회 이상 | 압축 권장 알림 |
+| 코드 블록 누적 | 대형 코드 블록 5개 이상 | 압축 권장 알림 |
+| 토큰 추정 경고 | warning_threshold 도달 | 즉시 압축 권장 |
+| 응답 품질 저하 | 이전 내용 반복·혼동 신호 | 즉시 압축 권장 |
+| 사용자 명시 요청 | `compress context` | 즉시 실행 |
+| 새 세션 시작 | SUMMARY.md 존재 시 | 자동 로드 |
+
+> Agent는 압축 조건 감지 시 현재 작업을 완료한 후 압축을 제안합니다. 단, 토큰 긴급(🔴) 상태에서는 응답 후 즉시 압축 절차를 시작합니다.
+
+### SUMMARY.md 파일 형식
+
+```markdown
+# Context Summary
+<!-- auto-generated by Agent — do not edit manually -->
+<!-- source_sessions: [session_YYYYMMDD_001, ...] -->
+<!-- created: YYYY-MM-DDTHH:MM:SSZ -->
+<!-- updated: YYYY-MM-DDTHH:MM:SSZ -->
+
+## Project State
+- 현재 단계: (예: Bootstrap 5 마이그레이션 60% 완료)
+- 마지막 완료 작업: (예: Header, Footer 변환 완료)
+- 다음 작업: (예: Card 컴포넌트 변환 예정)
+
+## Key Decisions Made
+- [YYYY-MM-DD] (결정 내용) — (이유) — 상세: DECISIONS.md 참조
+
+## Resolved Issues
+- (해결된 문제 요약 — 재발 방지용)
+
+## Active Constraints
+- (현재 작업에서 반드시 지켜야 할 제약)
+
+## Open Questions
+- (아직 미결인 사항)
+
+## Session Thread (최근 5개 교환 요약)
+1. [사용자] (요약)
+2. [Agent] (요약)
+3. [사용자] (요약)
+4. [Agent] (요약)
+5. [사용자] (요약) → 현재 위치
+```
+
+### INDEX.md 파일 형식
+
+```markdown
+# Archive Index
+
+## Session Directory
+| 파일 | 날짜 | 교환 수 | 주요 내용 키워드 |
+|------|------|---------|----------------|
+| session_YYYYMMDD_001.md | YYYY-MM-DD | N회 | (키워드) |
+
+## Topic Index
+| 주제 | 파일 | 교환 번호 |
+|------|------|---------|
+| (주제) | session_YYYYMMDD_001.md | 교환 #N~#M |
+
+## Code Artifact Index
+| 아티팩트 | 파일 | 교환 번호 |
+|---------|------|---------|
+| (코드 설명) | session_YYYYMMDD_001.md | 교환 #N |
+```
+
+### 압축 실행 절차
+
+```
+1. 현재 세션 대화 전체를 아카이브 파일로 저장
+   → .ai.dev/context/archive/session_YYYYMMDD_NNN.md
+
+2. 기존 SUMMARY.md 로드 (있으면)
+
+3. 새 대화 내용을 기존 요약에 병합:
+   - Project State 업데이트
+   - Key Decisions 추가
+   - Resolved Issues 추가
+   - Open Questions 갱신
+   - Session Thread: 최근 5개 교환만 유지
+
+4. INDEX.md 업데이트:
+   - Session Directory에 새 파일 추가
+   - Topic Index에 주요 주제 위치 추가
+   - Code Artifact Index에 코드 위치 추가
+
+5. 완료 보고:
+   "[압축 완료]
+    아카이브: session_YYYYMMDD_NNN.md ({N}개 교환)
+    다음 세션에서 SUMMARY.md 자동 로드됩니다."
+```
+
+### 세션 재시작 시 자동 로드
+
+```
+새 세션 시작 시:
+1. .ai.dev/context/SUMMARY.md 존재 확인
+   → 없음: 일반 시작
+   → 있음: 자동 로드 후 출력:
+
+"[이전 컨텍스트 복원]
+ 프로젝트: {Project State}
+ 마지막 작업: {마지막 완료 작업}
+ 다음 예정: {다음 작업}
+ 미결 사항: {Open Questions 수}개
+ 이어서 진행할까요?"
+```
+
+### 원본 검색 절차
+
+압축본만으로 답하기 어려울 때 원본 아카이브를 검색합니다.
+
+```
+검색 트리거:
+  - 과거 결정·코드 참조 요청 ("언제 그 결정을 했었지?" 등)
+  - SUMMARY.md에서 충분한 정보를 찾지 못했을 때
+  - 상세 코드 아티팩트가 필요할 때
+
+검색 절차:
+1. INDEX.md의 Topic Index 또는 Code Artifact Index 스캔
+   → 관련 세션 파일과 교환 번호 파악
+
+2. 해당 아카이브 파일의 해당 교환 번호 섹션만 읽기
+   → 전체 파일 읽기 금지 (토큰 절약)
+
+3. 찾은 내용을 현재 컨텍스트에 임시 주입
+   → "[아카이브 검색] session_YYYYMMDD_001.md #교환{N}"
+
+4. 검색 실패 시:
+   → INDEX.md에 없으면 가장 관련 높은 세션 파일 전체 스캔
+   → 그래도 없으면 사용자에게 직접 확인 요청
+```
+
+### 컨텍스트 관리 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `compress context` | 현재 세션 압축·아카이브·인덱스 업데이트 즉시 실행 |
+| `show context summary` | 현재 SUMMARY.md 내용 출력 |
+| `search archive: <키워드>` | INDEX.md 검색 후 관련 아카이브 섹션 반환 |
+| `show context index` | INDEX.md 전체 출력 |
+| `reset context` | SUMMARY.md 초기화 (아카이브는 보존) |
+
+---
+
 ## AI 명령어 (트리거 & 실행 절차)
 
 > **AI 명령어란?**
 > 사용자가 채팅에서 아래 명령어를 입력하거나, 자연어로 동일한 의도를 표현하면 Agent가 해당 절차를 자동으로 실행합니다.
 > 예: `"UserService 테스트 만들어줘"` → `generate tests for UserService with coverage` 명령어로 매핑 → 아래 절차 실행.
-> 사용자가 별도로 요청하지 않아도 아래 명령어가 필요한 상황이라고 판단되는 경우 사용자에게 권장 한다.
+> 사용자가 별도로 요청하지 않아도 아래 명령어가 필요한 상황이라고 판단되는 경우 사용자에게 권장 합니다.
 
 ### 명령어 목록 및 실행 절차
 
@@ -1422,12 +2002,141 @@ Agent는 선택된 프레임워크의 **공식·커뮤니티 표준 가이드라
 3. `up`: 미적용 마이그레이션 적용 / `down`: 직전 마이그레이션 롤백
 4. 결과 및 현재 DB 버전 보고
 
+#### `build codebase profile`
+1. 전체 프로젝트 스캔
+2. CODEBASE_PROFILE.md 파일 생성 (코드베이스 프로파일 캐시 > 파일 형식 참조)
+3. 프로파일 버전 1로 저장
+
+#### `rebuild codebase profile`
+1. 기존 CODEBASE_PROFILE.md 폐기
+2. 전체 재스캔 후 처음부터 새로 생성
+
+#### `update codebase profile for <파일/모듈>`
+1. 지정된 파일·모듈 범위만 부분 재스캔
+2. CODEBASE_PROFILE.md 해당 섹션만 업데이트
+3. `last_updated`, `profile_version` 갱신
+
+#### `show codebase profile`
+1. CODEBASE_PROFILE.md 로드
+2. 각 섹션 요약 출력 (버전, 구조, 컨벤션, 보호 심볼 등)
+
+#### `check profile freshness`
+1. CODEBASE_PROFILE.md의 `last_updated`와 실제 파일 수정 시간 비교
+2. 신선도 보고서 출력:
+   - 🟢 최신: 모든 파일이 프로파일 이후 변경 없음
+   - 🟡 일부 변경: 일부 파일이 프로파일 이후 변경됨 (목록 표시)
+   - 🔴 대규모 변경: 주요 구조 변경 감지, 전체 재스캔 권장
+
+#### `analyze before modify <파일/기능>`
+1. 코드 수정 실행 프로토콜 Phase 1~2 수행
+2. 수정 대상의 컨벤션·의존관계·수정 금지 범위 출력
+3. 사용자 확인 후 수정 진행
+
+#### `check conventions in <파일명>`
+1. CODEBASE_PROFILE.md §3 컨벤션 로드
+2. 대상 파일의 네이밍·포맷·구조 패턴이 프로젝트 전체 컨벤션과 일치하는지 검사
+3. 불일치 항목 목록 출력
+
+#### `migration plan <현재버전> to <목표버전>`
+1. 공식 마이그레이션 가이드 웹 검색
+2. Breaking Changes 목록 수집
+3. 영향받는 파일 목록 식별
+4. 단계별 실행 계획 출력
+
+#### `compress context`
+1. 현재 세션 대화 전체를 아카이브 파일로 저장
+2. SUMMARY.md 업데이트 (컨텍스트 관리 및 대화 압축 > SUMMARY.md 파일 형식 참조)
+3. INDEX.md 업데이트
+4. 완료 보고
+
+#### `show context summary`
+1. `.ai.dev/context/SUMMARY.md` 로드
+2. 전체 내용 출력
+
+#### `search archive: <키워드>`
+1. INDEX.md의 Topic Index 및 Code Artifact Index에서 키워드 검색
+2. 관련 아카이브 파일의 해당 교환 번호 섹션만 읽기
+3. 찾은 내용을 현재 컨텍스트에 임시 주입 후 출력
+
+#### `show context index`
+1. `.ai.dev/context/INDEX.md` 로드
+2. 전체 인덱스 출력
+
+#### `reset context`
+1. SUMMARY.md 초기화 (새 템플릿으로 재생성)
+2. 아카이브 파일은 보존
+3. INDEX.md는 유지
+
+#### `reconfigure agent`
+1. AGENT_CONFIG.md 재설정 절차 시작
+2. 모델 재식별 또는 사용자 확인
+3. 설정값 갱신
+
+#### `show agent config`
+1. AGENT_CONFIG.md 로드
+2. 모델명, 컨텍스트 윈도우, 임계값 등 현재 설정 출력
+
+#### `show token estimate`
+1. AGENT_CONFIG.md의 calibration 데이터 기반 현재 토큰 사용량 추정
+2. 여유 토큰 및 현재 상태(🟢/🟡/🔴) 출력
+
+#### `calibrate tokens`
+1. 현재 대화의 평균 토큰 사용량 재측정 시도
+2. AGENT_CONFIG.md Calibration 섹션 업데이트
+
+---
+
+## 초기화 절차 (Initialization)
+
+> 프로젝트에서 처음 실행할 때의 전체 절차입니다. 명시적 트리거 없이는 자동으로 시작하지 않습니다.
+
+### 트리거 명령어
+
+```
+"이 프로젝트를 초기화해줘"
+또는
+"initialize project"
+```
+
+### 초기화 실행 순서
+
+```
+Step 1. AGENT_CONFIG.md 확인
+  → 없음: 모델 자가 식별 시도
+           → 성공: 스펙 조회 → AGENT_CONFIG.md 생성
+           → 실패: 사용자에게 1회 질문 → AGENT_CONFIG.md 생성
+  → 있음: 로드 후 Step 2로
+
+Step 2. .ai.dev/ 폴더 구조 생성
+  → .ai.dev/ 없으면 생성
+  → 기본 파일들 생성 (DECISIONS.md, ARCHITECTURE.md 등)
+  → context/ 폴더 생성
+
+Step 3. CODEBASE_PROFILE.md 확인
+  → 없음: "코드베이스 프로파일을 지금 생성할까요?" 확인 후 실행
+  → 있음: 신선도 확인
+
+Step 4. SUMMARY.md 확인
+  → 있음: 이전 컨텍스트 복원 알림
+  → 없음: 새 프로젝트로 시작
+
+Step 5. 초기화 완료 보고:
+  "[초기화 완료]
+   모델: {model_name} ({effective_max:,} tokens)
+   컨텍스트 압축 임계값: {compression_threshold:,} tokens
+   프로파일: {있음/없음}
+   이전 컨텍스트: {있음/없음}
+   Q0부터 시작할까요?"
+```
+
 ---
 
 ## Agent 작업 흐름 (통합)
 
 ```
 ⓪ .ai.dev/ 폴더 및 DECISIONS.md 생성           → 프로젝트 최초 실행 시 가장 먼저 수행
+⓪-① AGENT_CONFIG.md 확인·생성                   → 모델 자가 식별, 없으면 사용자 1회 확인
+⓪-② CODEBASE_PROFILE.md 확인·생성               → 코드베이스 전체 스캔 및 프로파일 캐시
 ① 초기 질문 및 프로젝트 정의                       → Q0에서 유형 확인 후 Q1~Q16 그룹별 진행 및 DECISIONS.md 갱신
 ② 개발 환경 및 IDE 추천                           → 개발 환경 설정
 ③ 방법론·아키텍처 결정                             → .ai.dev/ARCHITECTURE.md 초안
@@ -1444,6 +2153,7 @@ Agent는 선택된 프레임워크의 **공식·커뮤니티 표준 가이드라
 ⑭ 최종 문서 일관성 검사                             → .ai.dev/ 내 모든 문서와 코드 정합성 확인
 ⑮ 인프라/CI-CD 파이프라인 구성 및 부하 테스트 스크립트 작성 (사용자 선택 시)
 ⑯ MLOps 파이프라인 구성 (AI/ML 프로젝트 시)
+⑰ 컨텍스트 압축 및 아카이브 (압축 조건 충족 시)      → .ai.dev/context/ 에 세션 보존
 ```
 
 ---
@@ -1463,6 +2173,7 @@ Agent는 선택된 프레임워크의 **공식·커뮤니티 표준 가이드라
 - 독자(신규 사용자) 관점의 이해도 및 예제 충분성
 - 작업 중 발견한 인사이트나 반복 가능한 실수
 - 후속 작업이나 백로그 추가 필요성
+- CODEBASE_PROFILE.md 및 SUMMARY.md의 최신성
 
 ---
 
@@ -1502,3 +2213,21 @@ Agent는 선택된 프레임워크의 **공식·커뮤니티 표준 가이드라
 | `generate data migration script for <테이블명>` | ✅ |
 | `generate docker setup` | ✅ |
 | `db migrate up / down` | 조건부 |
+| `build codebase profile` | ✅ |
+| `rebuild codebase profile` | ✅ |
+| `update codebase profile for <파일/모듈>` | ✅ |
+| `show codebase profile` | ✅ |
+| `check profile freshness` | ✅ |
+| `analyze before modify <파일/기능>` | ✅ |
+| `check conventions in <파일명>` | ✅ |
+| `migration plan <현재버전> to <목표버전>` | ✅ |
+| `compress context` | ✅ |
+| `show context summary` | ✅ |
+| `search archive: <키워드>` | ✅ |
+| `show context index` | ✅ |
+| `reset context` | 조건부 |
+| `reconfigure agent` | ❌ 필수 승인 |
+| `show agent config` | ✅ |
+| `show token estimate` | ✅ |
+| `calibrate tokens` | ✅ |
+| `initialize project` | ❌ 필수 승인 |
