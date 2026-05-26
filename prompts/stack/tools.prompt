@@ -2,21 +2,21 @@
 ## 언어별 IDE 추천
 |언어|무료 IDE|유료 IDE|핵심 플러그인·익스텐션|
 |------|----------|----------|------------------------|
-|**Python**|VS Code, PyCharm CE|PyCharm Professional|Pylance, Ruff, Black Formatter, Python Test Explorer|
-|**TypeScript / JS**|VS Code|WebStorm|ESLint, Prettier, TypeScript Vue Plugin, Import Cost|
-|**Go**|VS Code, GoLand (30일 체험)|GoLand|Go (공식), gopls, delve 디버거|
-|**Rust**|VS Code, RustRover (비상업 무료)|RustRover|rust-analyzer, CodeLLDB, crates|
-|**Java**|IntelliJ IDEA CE, Eclipse, VS Code|IntelliJ IDEA Ultimate|Spring Boot Tools, Lombok, CheckStyle|
-|**Kotlin**|IntelliJ IDEA CE, Android Studio|IntelliJ IDEA Ultimate|Kotlin 공식, ktlint|
-|**C#**|VS Code, Visual Studio CE|Visual Studio, Rider|C# Dev Kit, OmniSharp, .NET MAUI|
-|**PHP**|VS Code, PhpStorm (30일 체험)|PhpStorm|PHP Intelephense, PHP CS Fixer, Laravel Extension Pack|
-|**Elixir**|VS Code|—|ElixirLS, Credo, Mix Tasks|
+|Python|VS Code, PyCharm CE|PyCharm Professional|Pylance, Ruff, Black Formatter, Python Test Explorer|
+|TypeScript / JS|VS Code|WebStorm|ESLint, Prettier, TypeScript Vue Plugin, Import Cost|
+|Go|VS Code, GoLand (30일 체험)|GoLand|Go (공식), gopls, delve 디버거|
+|Rust|VS Code, RustRover (비상업 무료)|RustRover|rust-analyzer, CodeLLDB, crates|
+|Java|IntelliJ IDEA CE, Eclipse, VS Code|IntelliJ IDEA Ultimate|Spring Boot Tools, Lombok, CheckStyle|
+|Kotlin|IntelliJ IDEA CE, Android Studio|IntelliJ IDEA Ultimate|Kotlin 공식, ktlint|
+|C#|VS Code, Visual Studio CE|Visual Studio, Rider|C# Dev Kit, OmniSharp, .NET MAUI|
+|PHP|VS Code, PhpStorm (30일 체험)|PhpStorm|PHP Intelephense, PHP CS Fixer, Laravel Extension Pack|
+|Elixir|VS Code|—|ElixirLS, Credo, Mix Tasks|
 ## 공통 추천 (모든 언어)
-- **VS Code** + 언어별 플러그인: 무료, 경량, 범용
-- **클라우드 기반 개발 환경**: GitHub Codespaces, Gitpod — 로컬 설정 없이 즉시 개발 가능, 팀 환경 일관성 확보
-- **Docker Desktop**: 로컬 컨테이너 환경
-- **TablePlus / DBeaver** (무료): DB GUI 클라이언트
-- **Postman / Bruno** (Bruno는 오픈소스): API 테스트
+- VS Code + 언어별 플러그인: 무료, 경량, 범용
+- 클라우드 기반 개발 환경: GitHub Codespaces, Gitpod — 로컬 설정 없이 즉시 개발 가능, 팀 환경 일관성 확보
+- Docker Desktop: 로컬 컨테이너 환경
+- TablePlus / DBeaver (무료): DB GUI 클라이언트
+- Postman / Bruno (Bruno는 오픈소스): API 테스트
 ## 협업·생산성 도구 추천
 |도구|용도|무료 여부|
 |------|------|-----------|
@@ -55,8 +55,8 @@
 ## 공통 런타임 최적화
 - 제너레이터/스트림으로 대용량 데이터 처리 (메모리 절감)
 - 객체 풀링으로 GC 압력 감소
-- **측정 먼저 → 최적화**: 프로파일링 없는 최적화 금지
+- 측정 먼저 → 최적화: 프로파일링 없는 최적화 금지
 - CI 캐싱, 병렬 빌드, 불필요 파일 제거
 언어별 세부 구현은 언어별 .prompt 파일의 `빌드 및 최적화` 섹션을 참조합니다.
 ## 대용량 데이터 처리 패턴 (상세: prompts/patterns/data-processing.prompt)
-**원칙**: 전체 로드(eager) 대신 스트리밍/청크/lazy 처리. 프로파일링 없는 최적화 금지.
+원칙: 전체 로드(eager) 대신 스트리밍/청크/lazy 처리. 프로파일링 없는 최적화 금지.

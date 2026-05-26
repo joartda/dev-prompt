@@ -20,8 +20,8 @@ main (항상 배포 가능)
 [본문: 변경 이유 및 영향]
 [Footer: Breaking Change / 이슈 링크]
 ```
-**type**: `feat` · `fix` · `refactor` · `perf` · `test` · `docs` · `chore`
-**BREAKING CHANGE 표기**: 하위 호환이 깨지는 변경은 Footer에 `BREAKING CHANGE: <설명>`을 반드시 기재합니다.
+type: `feat` · `fix` · `refactor` · `perf` · `test` · `docs` · `chore`
+BREAKING CHANGE 표기: 하위 호환이 깨지는 변경은 Footer에 `BREAKING CHANGE: <설명>`을 반드시 기재합니다.
 ## 버전 관리 (Semantic Versioning)
 `MAJOR.MINOR.PATCH`
 - PATCH: 버그 수정
