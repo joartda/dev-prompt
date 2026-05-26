@@ -1,11 +1,7 @@
 # 로깅 표준
-
 ## 로그 레벨
-
 `ERROR` > `WARN` > `INFO` > `DEBUG` > `TRACE`
-
 ## 구조화 로그 형식 (JSON)
-
 ```json
 {
   "timestamp": "2025-01-15T10:30:00Z",
@@ -17,47 +13,36 @@
   "correlation_id": "xyz-789"
 }
 ```
-
 ## 비동기 작업 로깅 필수 필드
-
 `job_id` · `event_id` · `correlation_id` · 작업 시작·완료·실패 이벤트 · consumer lag
-
 ## 로그 관리 규칙
-
-| 항목 | 규칙 |
+|항목|규칙|
 |------|------|
-| 파일 순환 | 최대 1 GB, 30일 보관 |
-| 민감 정보 | 절대 로깅 금지 → 마스킹 함수 필수 |
-| 환경별 레벨 | production: INFO 이상 / DEBUG는 동적 활성화만 |
-| 외부 노출 | 스택 트레이스·내부 경로·SQL 구문 절대 노출 금지 |
-
+|파일 순환|최대 1 GB, 30일 보관|
+|민감 정보|절대 로깅 금지 → 마스킹 함수 필수|
+|환경별 레벨|production: INFO 이상 / DEBUG는 동적 활성화만|
+|외부 노출|스택 트레이스·내부 경로·SQL 구문 절대 노출 금지|
 ## 언어별 로깅 라이브러리
-
-| 언어 | 추천 라이브러리 |
+|언어|추천 라이브러리|
 |------|----------------|
-| Python | structlog · loguru |
-| TypeScript | pino · winston |
-| Go | zap · slog (표준 라이브러리) |
-| Rust | tracing · log |
-| Java / Kotlin | SLF4J + Logback · Log4j2 |
-| C# | Serilog · NLog |
-| PHP | Monolog |
-| Elixir | Logger (내장) + Telemetry |
-
+|Python|structlog · loguru|
+|TypeScript|pino · winston|
+|Go|zap · slog (표준 라이브러리)|
+|Rust|tracing · log|
+|Java / Kotlin|SLF4J + Logback · Log4j2|
+|C#|Serilog · NLog|
+|PHP|Monolog|
+|Elixir|Logger (내장) + Telemetry|
 ## 관측 가능성 (Observability) 확장 스택
-
-> 대규모 시스템에서는 장애 원인 파악을 위해 로그(Logs), 메트릭(Metrics), 분산 추적(Traces) 3가지를 연동해야 합니다. Q14에서 선택 시 적용합니다.
-
-| 영역 | 무료/오픈소스 스택 | 상용/SaaS 스택 |
+대규모 시스템에서는 장애 원인 파악을 위해 로그(Logs), 메트릭(Metrics), 분산 추적(Traces) 3가지를 연동해야 합니다. Q14에서 선택 시 적용합니다.
+|영역|무료/오픈소스 스택|상용/SaaS 스택|
 |------|--------------------|----------------|
-| **메트릭 (Metrics)** | Prometheus + Grafana | Datadog, New Relic |
-| **분산 추적 (Traces)** | Jaeger, Zipkin, Tempo | Datadog APM, Sentry |
-| **로그 집중화 (Logs)** | ELK Stack, Loki | Datadog, Splunk |
-| **오류 수집 (Errors)** | Sentry (Self-hosted) | Sentry (Cloud) |
-| **통합 표준** | **OpenTelemetry (Otel)** | 모든 관측 데이터의 수집 표준으로 적용 권장 |
-
+|**메트릭 (Metrics)**|Prometheus + Grafana|Datadog, New Relic|
+|**분산 추적 (Traces)**|Jaeger, Zipkin, Tempo|Datadog APM, Sentry|
+|**로그 집중화 (Logs)**|ELK Stack, Loki|Datadog, Splunk|
+|**오류 수집 (Errors)**|Sentry (Self-hosted)|Sentry (Cloud)|
+|**통합 표준**|**OpenTelemetry (Otel)**|모든 관측 데이터의 수집 표준으로 적용 권장|
 ## 관측 가능성 필수 규칙 (대규모 시스템용)
-
 1. **OpenTelemetry 연동**: 마이크로서비스 또는 분산 시스템 간 통신 시 HTTP 헤더(`traceparent`)를 통해 `trace_id`를 반드시 전파합니다.
 2. **에러 트래킹 중앙화**: 단순 콘솔 로그가 아닌 Sentry 등의 도구를 통해 에러 발생 빈도와 스택 트레이스를 중앙 수집합니다.
 3. **골든 시그널 모니터링**: 대시보드 구성 시 대기 시간(Latency), 트래픽(Traffic), 에러(Errors), 포화도(Saturation) 4대 지표를 필수로 포함합니다.

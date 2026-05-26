@@ -1,38 +1,29 @@
 # 초기화 절차 (Initialization)
-
-> 프로젝트에서 처음 실행할 때의 전체 절차입니다. 명시적 트리거 없이는 자동으로 시작하지 않습니다.
-
+프로젝트에서 처음 실행할 때의 전체 절차입니다. 명시적 트리거 없이는 자동으로 시작하지 않습니다.
 ### 트리거 명령어
-
 ```
 "이 프로젝트를 초기화해줘"
 또는
 "initialize project"
 ```
-
 ### 초기화 실행 순서
-
 ```
 Step 1. AGENT_CONFIG.md 확인
   → 없음: 모델 자가 식별 시도
            → 성공: 스펙 조회 → AGENT_CONFIG.md 생성
            → 실패: 사용자에게 1회 질문 → AGENT_CONFIG.md 생성
   → 있음: 로드 후 Step 2로
-
 Step 2. .ai.dev/ 폴더 구조 생성
   → .ai.dev/ 없으면 생성
   → 기본 파일들 생성 (DECISIONS.md, ARCHITECTURE.md 등)
   → context/ 폴더 생성
-
 Step 3. CODEBASE_PROFILE.md 확인
   → 없음: "코드베이스 프로파일을 지금 생성할까요?" 확인 후 실행
   → 있음: 신선도 확인
   → 신규 프로젝트이며 파일이 3개 미만이면 지연 생성
-
 Step 4. SUMMARY.md 확인
   → 있음: 이전 컨텍스트 복원 알림
   → 없음: 새 프로젝트로 시작
-
 Step 5. 초기화 완료 보고:
   "[초기화 완료]
    모델: {model_name} ({effective_max:,} tokens)
@@ -41,11 +32,8 @@ Step 5. 초기화 완료 보고:
    이전 컨텍스트: {있음/없음}
    Q0부터 시작할까요?"
 ```
-
 ### 경량 초기화 (소형 프로젝트)
-
 DECISIONS.Q3 = A(소형) 또는 `initialize project --quick` 사용 시:
-
 ```
 Step 1. AGENT_CONFIG.md 확인·생성
 Step 2. .ai.dev/ 폴더 + DECISIONS.md 생성
@@ -53,9 +41,7 @@ Step 3. CODEBASE_PROFILE.md: 3개 파일 생성 후 지연 생성으로 예약
 Step 4. SUMMARY.md: 생성만 (빈 상태)
 Step 5. Q0~Q4만 진행, Q5~Q8 기본값 자동 적용
 ```
-
 ## Agent 작업 흐름 (통합)
-
 ```
 0.  .ai.dev/ 폴더 및 DECISIONS.md 생성           → 프로젝트 최초 실행 시 가장 먼저 수행
 0-1. AGENT_CONFIG.md 확인·생성                   → 모델 자가 식별, 없으면 사용자 1회 확인

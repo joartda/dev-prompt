@@ -1,13 +1,9 @@
 # NestJS 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - NestJS 공식 문서 우선: https://docs.nestjs.com
 - TypeScript, 의존성 주입, 모듈화, 데코레이터 기반
 - Express (기본) 또는 Fastify 어댑터 선택 가능
-
 ## 프로젝트 구조
-
 ```
 src/
 ├── main.ts
@@ -24,9 +20,7 @@ src/
 │   └── ...
 └── database/            # DB 설정, 마이그레이션
 ```
-
 ## 핵심 패턴
-
 - 의존성 주입: `@Injectable()`, `@Module({ providers: [...] })`
 - 컨트롤러: `@Controller()`, `@Get()`, `@Post()`, `@Body()`, `@Param()`
 - 서비스: 비즈니스 로직 (stateless)
@@ -36,9 +30,7 @@ src/
 - 필터: `@Catch()` (예외 처리)
 - 미들웨어: `@Middleware()` (로깅, CORS, 세션)
 - GraphQL: `@Resolver()`, `@Query()`, `@Mutation()` (@nestjs/graphql + Apollo)
-
 ## 주의사항
-
 - `@nestjs/config`로 환경 변수 관리 (`.env` 파일)
 - `class-validator` + `ValidationPipe`로 DTO 검증
 - TypeORM + `@nestjs/typeorm` 또는 Prisma + `@prisma/client`

@@ -1,102 +1,78 @@
 `prompts/stack/lang-go.prompt`
-
 # Go 언어 규칙
-
 ## Go 버전
-
 - Go 1.22+ 권장
 - Go 1.18+: 제네릭 지원
 - Go 1.21+: 표준 라이브러리 slog (구조화 로깅) 포함
-
 ## 핵심 라이브러리
-
-| 분류 | 라이브러리 |
+|분류|라이브러리|
 |------|-----------|
-| 웹 | Gin · Fiber · Echo · Chi |
-| ORM | GORM · sqlx · sqlc (코드 생성) |
-| 마이그레이션 | golang-migrate · goose |
-| 검증 | go-playground/validator |
-| 비동기 | goroutine + channel (내장) |
-| 태스크 큐 | Asynq · Machinery |
-| 테스트 | testify · mockery · go-sqlmock · testcontainers-go |
-| 정적 분석 | golangci-lint · staticcheck |
-
+|웹|Gin · Fiber · Echo · Chi|
+|ORM|GORM · sqlx · sqlc (코드 생성)|
+|마이그레이션|golang-migrate · goose|
+|검증|go-playground/validator|
+|비동기|goroutine + channel (내장)|
+|태스크 큐|Asynq · Machinery|
+|테스트|testify · mockery · go-sqlmock · testcontainers-go|
+|정적 분석|golangci-lint · staticcheck|
 ## 비동기 런타임 핵심 규칙
-
 - I/O 바운드 작업: goroutine 사용
 - 채널로 통신, 공유 메모리는 Mutex로 보호
 - `context.Context`로 타임아웃·취소 전파
 - `sync.WaitGroup`으로 고루틴 완료 대기
 - `errgroup`으로 에러 전파
 - CPU 바운드 작업: GOMAXPROCS 조정 또는 worker pool 패턴
-
 ## 테스트 도구
-
-| 용도 | 도구 |
+|용도|도구|
 |------|------|
-| 단위/통합 | testing (내장) |
-| 경쟁 조건 탐지 | `go test -race` |
-| 목(Mock) | testify/mock, mockery |
-| DB 목 | go-sqlmock |
-| 컨테이너 | testcontainers-go |
-| 속성 기반 | rapid (내장) |
-
+|단위/통합|testing (내장)|
+|경쟁 조건 탐지|`go test -race`|
+|목(Mock)|testify/mock, mockery|
+|DB 목|go-sqlmock|
+|컨테이너|testcontainers-go|
+|속성 기반|rapid (내장)|
 ## 로깅
-
-| 도구 | 특징 |
+|도구|특징|
 |------|------|
-| zap | 고성능, 구조화 로깅 |
-| slog | Go 1.21+ 표준 라이브러리, 구조화 로깅 |
-| zerolog | 제로 할당 JSON 로깅 |
-
+|zap|고성능, 구조화 로깅|
+|slog|Go 1.21+ 표준 라이브러리, 구조화 로깅|
+|zerolog|제로 할당 JSON 로깅|
 ## 포맷터 및 린터
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| gofmt | 코드 포맷터 (내장) |
-| goimports | import 정리 + 포맷팅 |
-| golangci-lint | 통합 린터 (다수 린터 포함) |
-| staticcheck | 고급 정적 분석 |
-| go vet | 표준 정적 분석 (내장) |
-
+|gofmt|코드 포맷터 (내장)|
+|goimports|import 정리 + 포맷팅|
+|golangci-lint|통합 린터 (다수 린터 포함)|
+|staticcheck|고급 정적 분석|
+|go vet|표준 정적 분석 (내장)|
 ## 빌드 및 최적화
-
 - `go build -ldflags="-s -w"` (디버그 정보 제거, 바이너리 크기 감소)
 - PGO (Profile-Guided Optimization): `go build -pgo=default.pgo`
 - `GOMEMLIMIT` 환경 변수로 GC 메모리 제한 설정
 - 대용량 데이터 처리: io.Reader/Writer 스트리밍, bufio, channel 파이프라인
 - 측정(프로파일링) 없는 최적화 금지 (`go tool pprof`, `go test -bench`)
-
 ## 보안 도구
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| gosec | SAST (정적 보안 분석) |
-| govulncheck | 의존성 취약점 검사 |
-| staticcheck | 보안 관련 검사 포함 |
-
+|gosec|SAST (정적 보안 분석)|
+|govulncheck|의존성 취약점 검사|
+|staticcheck|보안 관련 검사 포함|
 ## 모듈 관리
-
 - `go mod init`으로 모듈 초기화
 - `go mod tidy`로 의존성 정리
 - `go mod vendor`로 벤더링 가능
-
 ## 공통 비동기 패턴
-
 ```go
 // 병렬 처리 (errgroup)
 import "golang.org/x/sync/errgroup"
-
 g, ctx := errgroup.WithContext(ctx)
 g.Go(func() error { return task1(ctx) })
 g.Go(func() error { return task2(ctx) })
 if err := g.Wait(); err != nil { /* 에러 처리 */ }
-
 // 타임아웃
 ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 defer cancel()
 result, err := doWork(ctx)
-
 // 채널 통신
 ch := make(chan Result)
 go func() { ch <- compute() }()
@@ -105,7 +81,6 @@ case result := <-ch:
 case <-time.After(5 * time.Second):
     // 타임아웃
 }
-
 // Worker pool
 // worker 수 제한: buffered channel을 세마포어로 사용
 sem := make(chan struct{}, maxWorkers)
@@ -117,9 +92,7 @@ for _, item := range items {
     }(item)
 }
 ```
-
 ## 프레임워크 가이드라인 우선 원칙
-
 선택된 Go 프레임워크(Gin, Fiber, Echo 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
 프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
 일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

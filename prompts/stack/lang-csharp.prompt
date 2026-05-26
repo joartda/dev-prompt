@@ -1,74 +1,56 @@
 # C# 언어 규칙
-
 ## C# 버전
-
 - .NET 8+ 권장 (LTS)
 - C# 12+: primary constructors, collection expressions, inline arrays
 - .NET Aspire: 클라우드 네이티브 앱 개발 스택
-
 ## 핵심 라이브러리
-
-| 분류 | 라이브러리 |
+|분류|라이브러리|
 |------|-----------|
-| 웹 | ASP.NET Core · Minimal API |
-| ORM | EF Core · Dapper (경량) |
-| 마이그레이션 | EF Core Migrations · FluentMigrator |
-| 검증 | FluentValidation · DataAnnotations |
-| 비동기 | async/await (내장) · Polly (재시도, Circuit Breaker) |
-| 태스크 큐 | Hangfire · MassTransit |
-| 패턴 | MediatR (CQRS) · AutoMapper |
-| 테스트 | xUnit · NSubstitute · Bogus · Testcontainers |
-| 정적 분석 | Roslyn Analyzers · SonarAnalyzer |
-
+|웹|ASP.NET Core · Minimal API|
+|ORM|EF Core · Dapper (경량)|
+|마이그레이션|EF Core Migrations · FluentMigrator|
+|검증|FluentValidation · DataAnnotations|
+|비동기|async/await (내장) · Polly (재시도, Circuit Breaker)|
+|태스크 큐|Hangfire · MassTransit|
+|패턴|MediatR (CQRS) · AutoMapper|
+|테스트|xUnit · NSubstitute · Bogus · Testcontainers|
+|정적 분석|Roslyn Analyzers · SonarAnalyzer|
 ## 비동기 런타임 핵심 규칙
-
 - 모든 I/O 바운드 작업: `async Task` / `async ValueTask`
 - `ConfigureAwait(false)`로 컨텍스트 캡처 방지 (라이브러리 코드)
 - `CancellationToken` 전파 필수
 - CPU 바운드 작업: `Task.Run`으로 스레드 풀 오프로드
 - Polly: `RetryAsync`, `CircuitBreakerAsync` 정책 체인
-
 ## 테스트 도구
-
-| 용도 | 도구 |
+|용도|도구|
 |------|------|
-| 단위/통합 | xUnit / NUnit |
-| 비동기 | 내장 async Task 지원 |
-| 목(Mock) | NSubstitute |
-| 컨테이너 | Testcontainers .NET |
-| 속성 기반 | FsCheck |
-
+|단위/통합|xUnit / NUnit|
+|비동기|내장 async Task 지원|
+|목(Mock)|NSubstitute|
+|컨테이너|Testcontainers .NET|
+|속성 기반|FsCheck|
 ## 로깅
-
-| 도구 | 특징 |
+|도구|특징|
 |------|------|
-| Serilog | 구조화 로깅, 싱크 다양성, JSON 출력 |
-| NLog | 유연한 라우팅, 파일/DB/네트워크 |
-
+|Serilog|구조화 로깅, 싱크 다양성, JSON 출력|
+|NLog|유연한 라우팅, 파일/DB/네트워크|
 ## 포맷터 및 린터
-
-| 도구 | 용도 | 설정 파일 |
+|도구|용도|설정 파일|
 |------|------|-----------|
-| dotnet-format | 코드 포맷터 | `.editorconfig` |
-| Roslyn Analyzers | 정적 분석 (내장) | `.editorconfig` |
-
+|dotnet-format|코드 포맷터|`.editorconfig`|
+|Roslyn Analyzers|정적 분석 (내장)|`.editorconfig`|
 ## 빌드 및 최적화
-
 - `dotnet publish -c Release`로 릴리즈 빌드
 - `PublishSingleFile`: 단일 파일 배포
 - `PublishTrimmed`: 미사용 코드 제거 (트리밍)
 - AOT 컴파일: `PublishAot` (빠른 시작, 낮은 메모리)
 - `dotnet format`으로 CI 포맷 검증
-
 ## 보안 도구
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| Roslyn Security Analyzers | 보안 취약점 정적 분석 |
-| `dotnet list package --vulnerable` | 의존성 취약점 검사 |
-
+|Roslyn Security Analyzers|보안 취약점 정적 분석|
+|`dotnet list package --vulnerable`|의존성 취약점 검사|
 ## 공통 패턴
-
 ```csharp
 // Minimal API
 var app = WebApplication.CreateBuilder(args).Build();
@@ -77,7 +59,6 @@ app.MapGet("/users/{id}", async (int id, IUserService service) =>
     var user = await service.GetByIdAsync(id);
     return user is not null ? Results.Ok(user) : Results.NotFound();
 });
-
 // MediatR CQRS
 public record GetUserQuery(int Id) : IRequest<User>;
 public class GetUserHandler : IRequestHandler<GetUserQuery, User>
@@ -85,15 +66,12 @@ public class GetUserHandler : IRequestHandler<GetUserQuery, User>
     public async Task<User> Handle(GetUserQuery request, CancellationToken ct)
         => await repository.GetByIdAsync(request.Id, ct);
 }
-
 // Polly 재시도
 var pipeline = new ResiliencePipelineBuilder()
     .AddRetry(new RetryStrategyOptions { MaxRetryAttempts = 3 })
     .Build();
 ```
-
 ## 프레임워크 가이드라인 우선 원칙
-
 선택된 프레임워크(ASP.NET Core, Minimal API 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
 프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
 일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

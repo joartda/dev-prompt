@@ -1,13 +1,9 @@
 # Hono 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Hono 공식 문서 우선: https://hono.dev
 - 초경량, 엣지 런타임 최적화 (Cloudflare Workers, Deno, Bun, Node.js)
 - TypeScript, JSX, 다양한 미들웨어 생태계
-
 ## 프로젝트 구조
-
 ```
 src/
 ├── index.ts             # 진입점
@@ -20,9 +16,7 @@ src/
 └── lib/                 # 유틸리티
 wrangler.toml            # Cloudflare Workers 설정 (Cloudflare 배포 시)
 ```
-
 ## 핵심 패턴
-
 - 라우팅: `app.get('/users', handler)`, `app.route('/api', router)`
 - 미들웨어: `app.use('*', cors())`, 커스텀 미들웨어 체인
 - 검증: Zod (`zValidator`) — `@hono/zod-validator`
@@ -30,9 +24,7 @@ wrangler.toml            # Cloudflare Workers 설정 (Cloudflare 배포 시)
 - 정적 파일: `serveStatic` 미들웨어
 - 엣지: Cloudflare Workers, Deno, Bun 런타임 지원
 - JSX: `hono/jsx`로 서버 사이드 렌더링
-
 ## 주의사항
-
 - 엣지 런타임 제약: Node.js API 접근 제한 (Workers 환경)
 - `c.req.param()`, `c.req.query()`, `c.req.json()`으로 요청 데이터 접근
 - `c.json()`, `c.text()`, `c.html()`으로 응답

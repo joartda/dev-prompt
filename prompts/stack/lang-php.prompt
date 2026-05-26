@@ -1,72 +1,54 @@
 # PHP 언어 규칙
-
 ## PHP 버전
-
 - PHP 8.3+ 권장
 - PHP 8.0+: JIT 컴파일러, named arguments, union types, attributes
 - PHP 8.1+: enums, readonly properties, fibers
-
 ## 핵심 라이브러리
-
-| 분류 | 라이브러리 |
+|분류|라이브러리|
 |------|-----------|
-| 웹 | Laravel · Symfony · Slim |
-| ORM | Eloquent (Laravel) · Doctrine (Symfony) |
-| 마이그레이션 | Laravel Migrations · Doctrine Migrations |
-| 검증 | Laravel Validation · Symfony Validator |
-| 비동기 | Laravel Queue · Horizon (Redis) · Octane (Swoole/RoadRunner) |
-| 태스크 큐 | Laravel Queue + Horizon |
-| 테스트 | PHPUnit · Pest · Mockery |
-| 정적 분석 | PHPStan · Psalm · Pint (포맷터) |
-
+|웹|Laravel · Symfony · Slim|
+|ORM|Eloquent (Laravel) · Doctrine (Symfony)|
+|마이그레이션|Laravel Migrations · Doctrine Migrations|
+|검증|Laravel Validation · Symfony Validator|
+|비동기|Laravel Queue · Horizon (Redis) · Octane (Swoole/RoadRunner)|
+|태스크 큐|Laravel Queue + Horizon|
+|테스트|PHPUnit · Pest · Mockery|
+|정적 분석|PHPStan · Psalm · Pint (포맷터)|
 ## 비동기 런타임 핵심 규칙
-
 - 기본 PHP: 동기식 실행 (각 요청은 독립 프로세스)
 - Laravel Octane: Swoole/RoadRunner 기반 상주 메모리 실행
 - 큐 작업: `php artisan queue:work`로 백그라운드 처리
 - 긴 작업: 큐 + Horizon으로 비동기 처리
 - Fibers (PHP 8.1+): 경량 동시성 (I/O 바운드 작업)
-
 ## 테스트 도구
-
-| 용도 | 도구 |
+|용도|도구|
 |------|------|
-| 단위/통합 | PHPUnit / Pest |
-| 목(Mock) | Mockery |
-| HTTP 테스트 | Laravel HTTP Tests |
-
+|단위/통합|PHPUnit / Pest|
+|목(Mock)|Mockery|
+|HTTP 테스트|Laravel HTTP Tests|
 ## 로깅
-
-| 도구 | 특징 |
+|도구|특징|
 |------|------|
-| Monolog | PSR-3 표준, 다양한 핸들러, Laravel 내장 |
-
+|Monolog|PSR-3 표준, 다양한 핸들러, Laravel 내장|
 ## 포맷터 및 린터
-
-| 도구 | 용도 | 설정 파일 |
+|도구|용도|설정 파일|
 |------|------|-----------|
-| Pint (Laravel) | PHP-CS-Fixer 기반 포맷터 | `pint.json` |
-| PHP-CS-Fixer | 코드 포맷터 | `.php-cs-fixer.php` |
-| PHPStan | 정적 분석 (레벨 max 권장) | `phpstan.neon` |
-| Psalm | 정적 분석 | `psalm.xml` |
-
+|Pint (Laravel)|PHP-CS-Fixer 기반 포맷터|`pint.json`|
+|PHP-CS-Fixer|코드 포맷터|`.php-cs-fixer.php`|
+|PHPStan|정적 분석 (레벨 max 권장)|`phpstan.neon`|
+|Psalm|정적 분석|`psalm.xml`|
 ## 빌드 및 최적화
-
 - OPcache 활성화 (PHP 8 내장)
 - `composer install --optimize-autoloader --no-dev` (production)
 - Laravel: `php artisan optimize`로 설정 캐싱
 - JIT 활성화 (`opcache.jit = tracing`)
 - Octane: Swoole 또는 RoadRunner로 상주 실행
-
 ## 보안 도구
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| Laravel Security Checker | 의존성 취약점 검사 |
-| Enlightn | Laravel 보안+성능 감사 |
-
+|Laravel Security Checker|의존성 취약점 검사|
+|Enlightn|Laravel 보안+성능 감사|
 ## 공통 패턴
-
 ```php
 // Laravel: Eloquent + 검증
 class StoreUserRequest extends FormRequest
@@ -76,7 +58,6 @@ class StoreUserRequest extends FormRequest
         return ['email' => 'required|email|unique:users'];
     }
 }
-
 // Laravel: 큐 작업
 class ProcessPodcast implements ShouldQueue
 {
@@ -85,13 +66,10 @@ class ProcessPodcast implements ShouldQueue
         // 비동기 처리
     }
 }
-
 // Laravel Octane: 고성능
 // config/octane.php → Swoole 또는 RoadRunner 선택
 ```
-
 ## 프레임워크 가이드라인 우선 원칙
-
 선택된 프레임워크(Laravel, Symfony 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
 프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
 일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

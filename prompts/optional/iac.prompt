@@ -1,24 +1,18 @@
 # IaC (Infrastructure as Code) — Q15-2 선택 시 로드
-
 ## 추천 도구
-
-| 도구 | 언어 | 특징 |
+|도구|언어|특징|
 |------|------|------|
-| Terraform | HCL | 가장 범용적, 클라우드 중립, 큰 생태계 |
-| Pulumi | TypeScript/Python/Go | 실제 프로그래밍 언어로 인프라 정의 |
-| AWS CDK | TypeScript/Python | AWS 네이티브, CloudFormation 기반 |
-| OpenTofu | HCL | Terraform 오픈소스 포크 (LF 소속) |
-
+|Terraform|HCL|가장 범용적, 클라우드 중립, 큰 생태계|
+|Pulumi|TypeScript/Python/Go|실제 프로그래밍 언어로 인프라 정의|
+|AWS CDK|TypeScript/Python|AWS 네이티브, CloudFormation 기반|
+|OpenTofu|HCL|Terraform 오픈소스 포크 (LF 소속)|
 ## 적용 원칙
-
 - 상태 파일(State) 관리: S3/GCS + DynamoDB/Azure Cosmos DB (원격 잠금)
 - 모듈화: 재사용 가능한 모듈로 인프라 분할
 - 환경 분리: workspace 또는 디렉토리별 state (dev/staging/prod)
 - 시크릿: Terraform `sensitive = true`, Pulumi `Secret`
 - `terraform plan` / `pulumi preview`로 변경 사전 검토
-
 ## 명령어
-
-| 명령어 | 동작 |
+|명령어|동작|
 |--------|------|
-| `generate IaC for current project` | 프로젝트에 맞는 IaC 설정 파일 생성 |
+|`generate IaC for current project`|프로젝트에 맞는 IaC 설정 파일 생성|

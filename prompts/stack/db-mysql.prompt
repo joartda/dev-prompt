@@ -1,25 +1,17 @@
 # MySQL / MariaDB 규칙
-
 ## 특성
-
 - 관계형 DB, 읽기 많은 웹앱에 적합
 - MariaDB: MySQL 호환, 더 나은 성능, 오픈소스
 - InnoDB 스토리지 엔진 권장 (트랜잭션, FK 지원)
-
 ## 연결 풀 설정
-
 - `max_connections`: 애플리케이션 커넥션 풀 크기에 맞게 설정
 - `wait_timeout` / `interactive_timeout`: 적절히 설정하여 커넥션 누수 방지
 - Connection pooler: ProxySQL, MariaDB MaxScale
-
 ## 주의사항
-
 - `utf8mb4` 문자셋 사용 (이모지, 4바이트 문자 지원)
 - MyISAM 사용 금지 (트랜잭션 미지원, 테이블 레벨 락)
 - `COUNT(*)` InnoDB에서 전체 스캔 필요 (MyISAM과 다름)
 - 인덱스: B-tree 기본, FULLTEXT (전문 검색)
 - `EXPLAIN`으로 실행 계획 확인 필수
-
 ## 마이그레이션 도구
-
 - 언어별: Alembic (Python), Flyway (Java), golang-migrate (Go)

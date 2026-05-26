@@ -1,13 +1,9 @@
 # Ktor 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Ktor 공식 문서 우선: https://ktor.io
 - Kotlin 네이티브, 코루틴 기반 경량 프레임워크
 - 멀티플랫폼 지원 (JVM, Native, WASM)
-
 ## 프로젝트 구조
-
 ```
 src/main/kotlin/com/example/
 ├── Application.kt          # 진입점
@@ -22,9 +18,7 @@ src/main/kotlin/com/example/
 ├── dto/                    # 요청/응답 DTO
 └── plugin/                 # 커스텀 플러그인
 ```
-
 ## 핵심 패턴
-
 - 라우팅: `routing { get("/users/{id}") { ... } }`
 - Content Negotiation: `install(ContentNegotiation) { json() }` (kotlinx.serialization)
 - 요청: `call.parameters["id"]`, `call.receive<T>()`
@@ -32,9 +26,7 @@ src/main/kotlin/com/example/
 - 미들웨어 (Plugins): `install(CallLogging)`, `install(StatusPages)`
 - 상태 페이지: `install(StatusPages) { exception<NotFound> { ... } }`
 - 인증: `install(Authentication) { basic { ... } }`
-
 ## 주의사항
-
 - `engine { embeddedServer(Netty, port = 8080) { ... } }` 서버 설정
 - `install` 순서 중요 (애플리케이션 시작 시점)
 - kotlinx.serialization: `@Serializable` 데이터 클래스

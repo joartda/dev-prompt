@@ -1,13 +1,9 @@
 # Next.js 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Next.js 공식 문서 우선: https://nextjs.org/docs
 - React 19 기반, App Router (pages router보다 App Router 우선)
 - 서버 컴포넌트 우선, 클라이언트 컴포넌트는 필요한 경우만
-
 ## 프로젝트 구조
-
 ```
 app/                     # App Router
 ├── layout.tsx           # 루트 레이아웃
@@ -24,9 +20,7 @@ components/              # 공유 컴포넌트
 lib/                     # 유틸리티, API 클라이언트
 public/                  # 정적 파일
 ```
-
 ## 핵심 패턴
-
 - 서버 컴포넌트 기본: 직접 DB/API 호출 가능
 - 클라이언트 컴포넌트: `"use client"` (상태, 이펙트, 이벤트 핸들러)
 - 데이터 페칭: 서버 컴포넌트에서 직접 `async/await` + 캐싱
@@ -34,9 +28,7 @@ public/                  # 정적 파일
 - 서버 액션: `"use server"` (폼 제출, 변이)
 - 미들웨어: `middleware.ts` (인증, 리다이렉트, 헤더)
 - 정적 생성: `generateStaticParams`로 빌드 시 페이지 생성
-
 ## 주의사항
-
 - 'use client'는 최소화 (번들 크기, 서버 렌더링 혜택 상실)
 - `fetch()` 옵션: `{ cache: 'force-cache' | 'no-store' }`, `{ next: { revalidate: N } }`
 - 이미지: `next/image` (`<Image>`) 사용 (최적화 자동)

@@ -1,31 +1,23 @@
 # Redis 규칙
-
 ## 특성
-
 - 인메모리 키-값 저장소
 - 캐시, 세션, 실시간 순위표, Pub/Sub, Rate Limiting
 - 다양한 자료 구조: String, Hash, List, Set, Sorted Set, Stream, Bitmap
-
 ## 사용 패턴
-
 - 캐시: TTL 설정 필수 (`EXPIRE` / `SETEX`)
 - 세션: Hash 또는 String + TTL
 - 순위표: Sorted Set (`ZADD`, `ZRANGE`)
 - Pub/Sub: 채널 기반 메시지 브로커 (메시지 손실 가능)
 - Stream: Redis 5.0+ 로그/이벤트 저장 (메시지 지속성)
 - Rate Limiting: `INCR` + `EXPIRE` (슬라이딩 윈도우는 Lua 스크립트)
-
 ## 주의사항
-
 - 모든 데이터는 메모리 상주: 메모리 사용량 모니터링 필수
 - 키 만료: `maxmemory-policy` 설정 (allkeys-lru 권장)
 - RDB / AOF: 영속성 설정 (데이터 손실 허용도에 따라)
 - `KEYS` 명령어 금지: `SCAN` 사용 (대규모 키셋에서 차단 위험)
 - `redis-cli --bigkeys`로 큰 키 식별
 - 클러스터 모드: 해시 태그로 키 분산 제어
-
 ## 연결 풀 설정
-
 - 클라이언트 사이드 커넥션 풀 사용
 - `max_connections` (서버): `redis.conf` 설정
 - 타임아웃: `timeout 300` (서버), 클라이언트에 5s

@@ -1,13 +1,9 @@
 # ASP.NET Core 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - ASP.NET Core 공식 문서 우선: https://learn.microsoft.com/aspnet/core
 - .NET 표준, 고성능, 크로스 플랫폼
 - Minimal API 또는 Controller 기반 선택 가능
-
 ## 프로젝트 구조
-
 ```
 src/MyApp/
 ├── Program.cs               # 진입점, 서비스 등록, 미들웨어 파이프라인
@@ -23,9 +19,7 @@ src/MyApp/
 ├── Middleware/               # 커스텀 미들웨어
 └── Filters/                 # 액션 필터 (예외, 검증)
 ```
-
 ## 핵심 패턴
-
 - 의존성 주입: `builder.Services.AddScoped<IUserService, UserService>()`
 - 미들웨어: `app.UseAuthentication()`, `app.UseAuthorization()`
 - 컨트롤러: `[ApiController]`, `[Route("api/[controller]")]`
@@ -35,9 +29,7 @@ src/MyApp/
 - 설정: `IOptions<T>`, `appsettings.json`
 - 인증: JWT Bearer (`AddAuthentication().AddJwtBearer()`)
 - CORS: `AddCors()` + `UseCors()`
-
 ## 주의사항
-
 - `builder.Services.AddDbContext<T>(options => options.UseNpgsql(...))`
 - `app.UseHttpsRedirection()` (production 필수)
 - EF Core N+1: `Include()`, `ThenInclude()`로 eager loading

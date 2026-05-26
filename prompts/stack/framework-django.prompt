@@ -1,13 +1,9 @@
 # Django 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Django 공식 문서 우선: https://docs.djangoproject.com
 - Python 3.12+ / Django 5.0+ 권장
 - "Explicit is better than implicit" 원칙
-
 ## 프로젝트 구조
-
 ```
 project/
 ├── config/
@@ -24,18 +20,14 @@ project/
 ├── manage.py
 └── requirements.txt
 ```
-
 ## 핵심 패턴
-
 - ORM: Django ORM (`QuerySet` lazy evaluation, `select_related`, `prefetch_related`)
 - DRF (Django REST Framework): `ViewSet`, `Serializer`, `Permission`
 - 관리자: `admin.py` 커스터마이징 (검색, 필터, 인라인)
 - 마이그레이션: `python manage.py makemigrations && migrate`
 - 시그널: `post_save`, `pre_delete` (과도한 사용 금지)
 - 태스크: Celery (`@shared_task`)
-
 ## 주의사항
-
 - N+1: `select_related` (FK/O2O), `prefetch_related` (M2M, 역참조)
 - `F()` 표현식: race condition 방지 (원자적 업데이트)
 - `@transaction.atomic`: 트랜잭션 경계

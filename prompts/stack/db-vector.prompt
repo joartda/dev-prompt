@@ -1,24 +1,18 @@
 # 벡터 DB 규칙
-
 ## 특성
-
 - 벡터 임베딩 검색 (의미 검색, 유사도 검색)
 - AI/ML 애플리케이션: RAG, 추천 시스템, 이미지 검색
 - 옵션: pgvector (PostgreSQL 확장), Pinecone, Weaviate, Milvus, Qdrant, Chroma
-
 ## 선택 기준
-
-| 도구 | 특징 | 적합 상황 |
+|도구|특징|적합 상황|
 |------|------|-----------|
-| pgvector | PostgreSQL 통합, ACID | 이미 PostgreSQL 사용 중, 단순 벡터 검색 |
-| Pinecone | 완전 관리형 SaaS | 빠른 PoC, 운영 부담 최소 |
-| Weaviate | GraphQL API, 하이브리드 검색 | 멀티모달, 통합 검색 필요 |
-| Milvus | 성능 최고, 대규모 | 10억+ 벡터, 엔터프라이즈 |
-| Qdrant | Rust 기반 고성능 | 실시간, 정확도 우선 |
-| Chroma | 경량, 로컬 | 개발/테스트, 소규모 |
-
+|pgvector|PostgreSQL 통합, ACID|이미 PostgreSQL 사용 중, 단순 벡터 검색|
+|Pinecone|완전 관리형 SaaS|빠른 PoC, 운영 부담 최소|
+|Weaviate|GraphQL API, 하이브리드 검색|멀티모달, 통합 검색 필요|
+|Milvus|성능 최고, 대규모|10억+ 벡터, 엔터프라이즈|
+|Qdrant|Rust 기반 고성능|실시간, 정확도 우선|
+|Chroma|경량, 로컬|개발/테스트, 소규모|
 ## 주의사항
-
 - 인덱스: HNSW (정확도), IVF (속도), DiskANN (대용량)
 - 거리 측정: Cosine (문서), Euclidean (이미지), Dot product (추천)
 - 하이브리드 검색: 벡터 + 키워드 (BM25) 결합

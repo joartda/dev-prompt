@@ -1,22 +1,16 @@
 # MongoDB 규칙
-
 ## 특성
-
 - 문서형 NoSQL, 스키마 유연성
 - BSON 형식, JSON과 유사한 문서 저장
 - 빠른 프로토타이핑, 계층적 데이터에 적합
 - 수평 확장: 샤딩 내장
-
 ## 스키마 설계
-
 - `_id`: 기본 키 (ObjectId 또는 UUID 권장)
 - 임베디드 문서: 1:1, 1:N (small) 관계
 - 레퍼런스: N:M, 1:N (large) 관계
 - 스키마 검증: Schema Validation (MongoDB 3.6+)
 - 인덱스: 단일, 복합, 텍스트, 지리 공간, TTL
-
 ## 주의사항
-
 - JOIN 없음: `$lookup` (aggregation)으로 유사 JOIN 가능하나 성능 주의
 - 트랜잭션: 다중 문서 트랜잭션 지원 (4.0+ replica set)
 - 문서 크기 제한: 16MB (GridFS로 대용량 파일 처리)

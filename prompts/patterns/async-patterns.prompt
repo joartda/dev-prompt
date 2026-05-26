@@ -1,19 +1,15 @@
 # 비동기 특화 패턴
-
 ## 핵심 패턴 표
-
-| 패턴 | 설명 | 적용 예 |
+|패턴|설명|적용 예|
 |------|------|---------|
-| async / await | 동기 스타일 비동기 코드 | 모든 최신 언어 |
-| gather / all | 다수 비동기 작업 병렬 완료 | `asyncio.gather`, `Promise.all`, `tokio::join!` |
-| Queue / Worker | 작업을 큐에 넣고 백그라운드 소비 | Celery, BullMQ, Asynq, Oban |
-| Circuit Breaker | 연속 실패 시 차단 | Resilience4j, Polly, `failsafe-go` |
-| Retry + 지수 백오프 | 일시적 장애 재시도 | tenacity (Python), `backoff` (Go), Polly (.NET) |
-| Backpressure | 느린 소비자가 빠른 생산자를 압도 방지 | 버퍼 제한, 배압 전파 메커니즘 |
-| Lazy / 스트리밍 | 데이터 전체를 메모리에 올리지 않고 필요 시점에 생성 | Generator, DB 커서, 파일 스트림 |
-
+|async / await|동기 스타일 비동기 코드|모든 최신 언어|
+|gather / all|다수 비동기 작업 병렬 완료|`asyncio.gather`, `Promise.all`, `tokio::join!`|
+|Queue / Worker|작업을 큐에 넣고 백그라운드 소비|Celery, BullMQ, Asynq, Oban|
+|Circuit Breaker|연속 실패 시 차단|Resilience4j, Polly, `failsafe-go`|
+|Retry + 지수 백오프|일시적 장애 재시도|tenacity (Python), `backoff` (Go), Polly (.NET)|
+|Backpressure|느린 소비자가 빠른 생산자를 압도 방지|버퍼 제한, 배압 전파 메커니즘|
+|Lazy / 스트리밍|데이터 전체를 메모리에 올리지 않고 필요 시점에 생성|Generator, DB 커서, 파일 스트림|
 ## 비동기 테스트 필수 항목
-
 - 경쟁 조건 (동시 접근 시나리오)
 - 타임아웃 (비동기 작업이 정해진 시간 내 완료)
 - 데드락 탐지

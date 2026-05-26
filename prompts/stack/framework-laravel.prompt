@@ -1,13 +1,9 @@
 # Laravel 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Laravel 공식 문서 우선: https://laravel.com
 - MVC 패턴, Eloquent ORM, Blade 템플릿
 - PHP 생태계 최대 커뮤니티
-
 ## 프로젝트 구조
-
 ```
 app/
 ├── Http/
@@ -28,9 +24,7 @@ database/
 resources/views/            # Blade 템플릿
 config/                     # 설정 파일
 ```
-
 ## 핵심 패턴
-
 - Eloquent: `User::find($id)`, `User::where('email', $email)->first()`
 - 리소스 컨트롤러: `php artisan make:controller UserController --resource`
 - 검증: `StoreUserRequest` (Form Request) 또는 `$request->validate([...])`
@@ -39,9 +33,7 @@ config/                     # 설정 파일
 - 이벤트: `event(new UserRegistered($user))` → 리스너가 처리
 - 정책: `UserPolicy`로 인가 로직
 - 스코프: `scopeActive()` (Eloquent 로컬 스코프)
-
 ## 주의사항
-
 - N+1 방지: `User::with('posts')->get()` (eager loading)
 - `php artisan make:model -mcf` (모델 + 마이그레이션 + 팩토리 + 컨트롤러)
 - `php artisan optimize`로 설정 캐싱

@@ -1,81 +1,61 @@
 # TypeScript / JavaScript 언어 규칙
-
 ## 런타임 및 버전
-
 - Node.js 20 LTS 이상 권장
 - TypeScript 5.x 이상 권장 (strict 모드 기본)
 - Deno, Bun도 선택 가능
-
 ## 핵심 라이브러리
-
-| 분류 | 라이브러리 |
+|분류|라이브러리|
 |------|-----------|
-| 웹 | NestJS · Express · Fastify · Hono |
-| ORM | Prisma · TypeORM · Drizzle (경량) |
-| 검증 | Zod · class-validator · Joi |
-| 비동기 | axios · ky · got |
-| 태스크 큐 | BullMQ · bee-queue |
-| 테스트 | Jest · Vitest · Supertest · MSW · testcontainers-node |
-| 정적 분석 | ESLint · tsc --noEmit · SonarQube |
-
+|웹|NestJS · Express · Fastify · Hono|
+|ORM|Prisma · TypeORM · Drizzle (경량)|
+|검증|Zod · class-validator · Joi|
+|비동기|axios · ky · got|
+|태스크 큐|BullMQ · bee-queue|
+|테스트|Jest · Vitest · Supertest · MSW · testcontainers-node|
+|정적 분석|ESLint · tsc --noEmit · SonarQube|
 ## 비동기 런타임 핵심 규칙
-
 - I/O 바운드 작업: `async/await` 사용
 - CPU 바운드 작업: `worker_threads` 또는 클러스터 모듈로 오프로드
 - 이벤트 루프 차단 금지
 - `Promise.all`로 다수 비동기 작업 병렬 처리
 - `Promise.race` 또는 `AbortController`로 타임아웃 설정
 - `setImmediate`로 이벤트 루프 차단 방지
-
 ## 테스트 도구
-
-| 용도 | 도구 |
+|용도|도구|
 |------|------|
-| 단위/통합 | Jest, Vitest |
-| HTTP 테스트 | Supertest |
-| 목(Mock) | Jest Mock, MSW (Mock Service Worker) |
-| 컨테이너 | testcontainers-node |
-| 속성 기반 | fast-check |
-| E2E | Playwright, Cypress |
-
+|단위/통합|Jest, Vitest|
+|HTTP 테스트|Supertest|
+|목(Mock)|Jest Mock, MSW (Mock Service Worker)|
+|컨테이너|testcontainers-node|
+|속성 기반|fast-check|
+|E2E|Playwright, Cypress|
 ## 로깅
-
-| 도구 | 특징 |
+|도구|특징|
 |------|------|
-| pino | 고성능, 구조화 로깅, JSON 출력 |
-| winston | 유연한 설정, 다양한 트랜스포트 |
-
+|pino|고성능, 구조화 로깅, JSON 출력|
+|winston|유연한 설정, 다양한 트랜스포트|
 ## 포맷터 및 린터
-
-| 도구 | 용도 | 설정 파일 |
+|도구|용도|설정 파일|
 |------|------|-----------|
-| prettier | 코드 포맷터 | `.prettierrc` |
-| ESLint | 린터 | `.eslintrc` 또는 `eslint.config.js` |
-| tsc --noEmit | TypeScript 타입 검사 | `tsconfig.json` |
-
+|prettier|코드 포맷터|`.prettierrc`|
+|ESLint|린터|`.eslintrc` 또는 `eslint.config.js`|
+|tsc --noEmit|TypeScript 타입 검사|`tsconfig.json`|
 ## 패키지 매니저
-
 - npm (기본)
 - yarn (Berry PnP 포함)
 - pnpm (디스크 효율, strict 모드 권장)
-
 ## 빌드 및 최적화
-
 - 번들러: esbuild, tsup, Rollup (트리쉐이킹)
 - 메모리 제한: `--max-old-space-size` 플래그
 - 대용량 데이터 처리: Stream API, Generator, Readable 스트림
 - 측정(프로파일링) 없는 최적화 금지
-
 ## 보안 도구
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| npm audit | 의존성 취약점 검사 |
-| ESLint security plugins | 보안 규칙 린팅 |
-| Helmet | Express/Fastify 보안 헤더 |
-
+|npm audit|의존성 취약점 검사|
+|ESLint security plugins|보안 규칙 린팅|
+|Helmet|Express/Fastify 보안 헤더|
 ## 공통 비동기 패턴
-
 ```typescript
 // 병렬 처리
 const [result1, result2, result3] = await Promise.all([
@@ -83,7 +63,6 @@ const [result1, result2, result3] = await Promise.all([
   task2(),
   task3()
 ]);
-
 // 타임아웃
 const result = await Promise.race([
   longTask(),
@@ -91,26 +70,21 @@ const result = await Promise.race([
     setTimeout(() => reject(new Error('Timeout')), 5000)
   )
 ]);
-
 // AbortController
 const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 5000);
 const response = await fetch(url, { signal: controller.signal });
 clearTimeout(timeoutId);
-
 // CPU 작업 오프로드
 import { Worker } from 'worker_threads';
 const worker = new Worker('./worker.js');
 worker.on('message', (result) => { /* 처리 */ });
-
 // 태스크 큐
 import { Queue } from 'bullmq';
 const queue = new Queue('my-queue');
 await queue.add('job-name', { data: '...' });
 ```
-
 ## 프레임워크 가이드라인 우선 원칙
-
 선택된 TypeScript 프레임워크(NestJS, Next.js, Express 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
 프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
 일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

@@ -1,31 +1,21 @@
 # PostgreSQL DB 규칙
-
 ## 특성
-
 - 객체-관계형 DB, 가장 범용적
 - 복잡한 쿼리, 트랜잭션, JSON 지원
 - MVCC 기반 동시성 제어
 - 확장: pgvector (벡터 검색), PostGIS (지리 공간), TimescaleDB (시계열)
-
 ## 연결 풀 설정
-
 - 최대 연결 수: `pool_size = CPU 코어 × 2 + 디스크 수`
 - Connection pooler: PgBouncer (경량), Pgpool-II (로드 밸런싱)
 - 타임아웃: `statement_timeout = 30s`, `lock_timeout = 10s`
-
 ## 마이그레이션 도구
-
 - 언어별: Alembic (Python), Flyway (Java), golang-migrate (Go)
-
 ## 주의사항
-
 - 전체 테이블 스캔 주의: 인덱스가 없는 컬럼 조건의 WHERE/SORT
 - `SELECT *` 금지: 필요한 컬럼만 명시
 - 대량 데이터: `COPY` 명령어 사용 (`INSERT` 반복 금지)
 - 인덱스: B-tree 기본, GIN (JSON/배열), BRIN (시계열 대용량)
 - `VACUUM` 자동 설정 확인 (autovacuum)
-
 ## N+1 방지
-
 - ORM: `SELECT IN` 또는 `JOIN`으로 한 번에 조회
 - Batch fetching: `@BatchSize` (Hibernate), `selectinload` (SQLAlchemy)

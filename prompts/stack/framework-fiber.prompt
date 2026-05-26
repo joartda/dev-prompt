@@ -1,13 +1,9 @@
 # Fiber 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Fiber 공식 문서 우선: https://docs.gofiber.io
 - Express 스타일, 가장 빠른 Go 프레임워크 중 하나
 - `fasthttp` 기반 (net/http보다 10배 빠름)
-
 ## 프로젝트 구조
-
 ```
 internal/
 ├── handler/
@@ -21,9 +17,7 @@ cmd/server/
 ├── routes.go
 config/
 ```
-
 ## 핵심 패턴
-
 - 라우팅: `app.Get("/users/:id", handler.GetUser)`
 - 그룹: `v1 := app.Group("/v1")`
 - 미들웨어: `app.Use(logger.New())`, `app.Use(recover.New())`
@@ -31,9 +25,7 @@ config/
 - 검증: `go-playground/validator` (Fiber 내장 통합)
 - 응답: `c.JSON(data)`, `c.Status(400).JSON(err)`
 - Listen: `app.Listen(":3000")`, `app.ListenTLS(":443", "cert.crt", "key.key")`
-
 ## 주의사항
-
 - `c.Context()`에서 `context.Context` 반환 (취소 전파)
 - `c.Accepts()`로 콘텐츠 협상
 - `c.SendFile()`로 파일 전송

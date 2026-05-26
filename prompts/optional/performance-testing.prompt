@@ -1,30 +1,22 @@
 # 부하/성능 테스트 — Q16-1 선택 시 로드
-
 ## 언어/도구별 추천
-
-| 언어/환경 | 추천 도구 | 특징 |
+|언어/환경|추천 도구|특징|
 |-----------|-----------|------|
-| JavaScript/Go | k6 (Grafana k6) | 개발자 친화적(JS로 스크립트 작성), CI 통합 용이 |
-| Python | Locust | Python 기반, 분산 부하 테스트, 커스텀 시나리오 강점 |
-| Java | JMeter, Gatling | 엔터프라이즈 레거시 호환, 복잡한 프로토콜 지원 |
-| Rust | Goose | 극한의 동시성 성능 테스트, 메모리 효율 우수 |
-
+|JavaScript/Go|k6 (Grafana k6)|개발자 친화적(JS로 스크립트 작성), CI 통합 용이|
+|Python|Locust|Python 기반, 분산 부하 테스트, 커스텀 시나리오 강점|
+|Java|JMeter, Gatling|엔터프라이즈 레거시 호환, 복잡한 프로토콜 지원|
+|Rust|Goose|극한의 동시성 성능 테스트, 메모리 효율 우수|
 ## 구성 항목
-
 - VUs (가상 사용자 수): 점진적 증가(Ramp-up) 시나리오
 - 타겟 RPS: 목표 초당 요청 수 설정
 - 체크: 응답 상태 코드, 응답 시간 임계값
 - 임계값(Thresholds): p95 < 200ms, error rate < 1%
 - CI 통합: 성능 기준선(Baseline)과 비교, 회귀 감지 시 실패
-
 ## 명령어
-
-| 명령어 | 동작 |
+|명령어|동작|
 |--------|------|
-| `generate load test script for <endpoint>` | k6 또는 Locust 부하 테스트 스크립트 생성 |
-
+|`generate load test script for <endpoint>`|k6 또는 Locust 부하 테스트 스크립트 생성|
 ## 주의사항
-
 - 부하 테스트는 staging 환경에서 실행 (production 영향 최소화)
 - 기준선 측정 후 변경 사항과 비교하여 회귀 감지
 - 테스트 데이터: production과 유사한 규모와 분포

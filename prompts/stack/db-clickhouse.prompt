@@ -1,22 +1,16 @@
 # ClickHouse 규칙
-
 ## 특성
-
 - 컬럼형 DBMS, 대용량 분석/집계 쿼리 최적화
 - 열 기반 압축, 벡터화 쿼리 실행
 - OLAP (Online Analytical Processing) 전용
 - SQL 호환, 수평 확장
-
 ## 테이블 설계
-
 - MergeTree 엔진: 가장 범용적, 기본값
 - ReplicatedMergeTree: 복제 + 내결함성
 - Partition Key: 날짜 단위 파티셔닝 권장
 - Order By (Sorting Key): 쿼리 필터 기준으로 설정
 - Sampling Key: 대략적 집계 최적화
-
 ## 주의사항
-
 - OLTP(단건 Insert, 포인트 쿼리)에는 부적합
 - UPDATE/DELETE: 비동기, 일괄 처리 (OLTP식 단건 수정 금지)
 - `SELECT *` 금지: 필요한 컬럼만 명시

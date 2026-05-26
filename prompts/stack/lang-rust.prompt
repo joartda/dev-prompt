@@ -1,61 +1,46 @@
 `prompts/stack/lang-rust.prompt`
-
 # Rust 언어 규칙
-
 ## Rust 버전
-
 - Rust 1.75+ 권장 (stable 채널)
 - Edition 2021 기본 사용
-
 ## 핵심 라이브러리
-
-| 분류 | 라이브러리 |
+|분류|라이브러리|
 |------|-----------|
-| 웹 | Axum · Actix-web · Warp |
-| ORM | Diesel · SeaORM · sqlx (async) |
-| 검증 | validator · garde |
-| 비동기 | Tokio · async-std |
-| 직렬화 | serde · serde_json |
-| 테스트 | 내장 #[test] · rstest · mockall · testcontainers-rust |
-| 정적 분석 | clippy · cargo-audit |
-
+|웹|Axum · Actix-web · Warp|
+|ORM|Diesel · SeaORM · sqlx (async)|
+|검증|validator · garde|
+|비동기|Tokio · async-std|
+|직렬화|serde · serde_json|
+|테스트|내장 #[test] · rstest · mockall · testcontainers-rust|
+|정적 분석|clippy · cargo-audit|
 ## 비동기 런타임 핵심 규칙
-
 - 비동기 런타임: Tokio (사실상 표준)
 - `tokio::spawn`으로 비동기 작업 생성, 라이프타임 관리 주의
 - `tokio::select!` 매크로로 다중 비동기 작업 경합 처리
 - `tokio::time::timeout`으로 타임아웃 설정
 - CPU 바운드 작업: `tokio::task::spawn_blocking`으로 별도 스레드풀에서 실행
 - `Arc`와 `Mutex`/`RwLock`으로 공유 상태 관리 (데드락 주의)
-
 ## 테스트 도구
-
-| 용도 | 도구 |
+|용도|도구|
 |------|------|
-| 단위/통합 | 내장 `#[test]`, `#[tokio::test]` |
-| 목(Mock) | mockall |
-| 컨테이너 | testcontainers-rust |
-| 속성 기반 | proptest |
-| 퍼징 | cargo-fuzz, arbitrary |
-
+|단위/통합|내장 `#[test]`, `#[tokio::test]`|
+|목(Mock)|mockall|
+|컨테이너|testcontainers-rust|
+|속성 기반|proptest|
+|퍼징|cargo-fuzz, arbitrary|
 ## 로깅
-
-| 도구 | 특징 |
+|도구|특징|
 |------|------|
-| tracing | 구조화 로깅, span 기반, OpenTelemetry 연동 |
-| log | 경량 퍼사드 (매크로 기반) |
-| env_logger | 환경 변수 기반 로그 레벨 설정 |
-
+|tracing|구조화 로깅, span 기반, OpenTelemetry 연동|
+|log|경량 퍼사드 (매크로 기반)|
+|env_logger|환경 변수 기반 로그 레벨 설정|
 ## 포맷터 및 린터
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| rustfmt | 코드 포맷터 (내장) |
-| clippy | 린터 + 고급 정적 분석 (내장) |
-| cargo-audit | 의존성 취약점 검사 |
-
+|rustfmt|코드 포맷터 (내장)|
+|clippy|린터 + 고급 정적 분석 (내장)|
+|cargo-audit|의존성 취약점 검사|
 ## 빌드 및 최적화
-
 - 릴리즈 빌드: `cargo build --release`
 - `Cargo.toml` 프로파일 설정:
   ```
@@ -67,50 +52,38 @@
   ```
 - 대용량 데이터 처리: Iterator 체인 (지연 평가), `BufReader`/`BufWriter`, 스트리밍
 - 측정(프로파일링) 없는 최적화 금지 (`perf`, `flamegraph`, `cargo bench`)
-
 ## 보안 도구
-
-| 도구 | 용도 |
+|도구|용도|
 |------|------|
-| cargo-audit | 의존성 취약점 검사 |
-| cargo-deny | 라이선스, 취약점, 소스 검증 |
-| clippy | 보안 관련 린트 포함 |
-
+|cargo-audit|의존성 취약점 검사|
+|cargo-deny|라이선스, 취약점, 소스 검증|
+|clippy|보안 관련 린트 포함|
 ## 패키지 매니저
-
 - Cargo (내장)
 - `cargo add`로 의존성 추가
 - `cargo update`로 의존성 업데이트
-
 ## 공통 비동기 패턴
-
 ```rust
 // 병렬 처리
 let (r1, r2) = tokio::join!(task1(), task2());
-
 // 타임아웃
 match tokio::time::timeout(Duration::from_secs(5), long_task()).await {
     Ok(result) => { /* 처리 */ }
     Err(_) => { /* 타임아웃 */ }
 }
-
 // select 매크로
 tokio::select! {
     result = task1() => { /* task1 완료 */ }
     result = task2() => { /* task2 완료 */ }
     _ = tokio::time::sleep(Duration::from_secs(5)) => { /* 타임아웃 */ }
 }
-
 // CPU 작업 오프로드
 let result = tokio::task::spawn_blocking(|| cpu_bound_work()).await.unwrap();
-
 // 공유 상태
 let state = Arc::new(Mutex::new(State::new()));
 // 또는 actor 패턴: tokio::sync::mpsc 채널 사용
 ```
-
 ## 프레임워크 가이드라인 우선 원칙
-
 선택된 Rust 프레임워크(Axum, Actix-web 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
 프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
 일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

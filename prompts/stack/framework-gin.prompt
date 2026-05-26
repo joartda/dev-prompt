@@ -1,13 +1,9 @@
 # Gin 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Gin 공식 문서 우선: https://gin-gonic.com
 - 초경량, 고성능 Go 웹 프레임워크
 - martini 스타일 API, `gin.Context` 중심
-
 ## 프로젝트 구조
-
 ```
 internal/
 ├── handler/             # HTTP 핸들러
@@ -23,18 +19,14 @@ cmd/
     └── main.go          # 진입점
 config/                  # 설정 파일
 ```
-
 ## 핵심 패턴
-
 - 라우팅: `r.GET("/users/:id", handler.GetUser)`
 - 그룹: `v1 := r.Group("/api/v1")`
 - 미들웨어: `r.Use(gin.Logger(), gin.Recovery())`, 커스텀 `gin.HandlerFunc`
 - 바인딩: `c.ShouldBindJSON(&dto)`, `c.ShouldBindQuery(&dto)`
 - 검증: `binding:"required"` 태그 (go-playground/validator)
 - 응답: `c.JSON(http.StatusOK, data)`, `c.AbortWithStatusJSON(code, err)`
-
 ## 주의사항
-
 - `gin.Context` 요청 범위 내에서만 유지 (고루틴으로 전달 금지)
 - `gin.SetMode(gin.ReleaseMode)`로 프로덕션 모드
 - `gin.Logger()`: 구조화 로깅을 위해 zap/slog로 교체 권장

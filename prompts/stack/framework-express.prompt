@@ -1,13 +1,9 @@
 # Express.js 프레임워크 규칙
-
 ## 공식 가이드라인
-
 - Express 공식 문서 우선: https://expressjs.com
 - 가볍고 유연, 직접 구성 필요
 - 소-중형 프로젝트에 적합
-
 ## 프로젝트 구조
-
 ```
 src/
 ├── app.js               # Express 앱 설정, 미들웨어 등록
@@ -23,9 +19,7 @@ src/
 ├── validators/          # 요청 검증 (Joi, Zod)
 └── tests/
 ```
-
 ## 핵심 패턴
-
 - 미들웨어 체인: `app.use(middleware1, middleware2)`
 - 에러 처리: `(err, req, res, next) => {}` 4개 파라미터 미들웨어
 - 라우트: `express.Router()`로 모듈화
@@ -33,9 +27,7 @@ src/
 - 검증: Zod / Joi로 요청 본문, 파라미터, 쿼리 검증
 - CORS: `cors` 패키지
 - 보안: `helmet`, `express-rate-limit`, `express-mongo-sanitize`
-
 ## 주의사항
-
 - 모든 에러는 에러 처리 미들웨어로 전달 (`next(err)`)
 - `app.use(cors())` 대신 허용 Origin 명시
 - `express.json()` body size 제한 (`limit: '10mb'`)

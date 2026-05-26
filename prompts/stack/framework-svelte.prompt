@@ -1,13 +1,9 @@
 # Svelte / SvelteKit 프론트엔드 규칙
-
 ## 공식 가이드라인
-
 - Svelte 공식 문서 우선: https://svelte.dev
 - SvelteKit: 풀스택 프레임워크 (SSR, SSG, 파일 기반 라우팅)
 - 컴파일 타임 최적화, 가상 DOM 없음
-
 ## 프로젝트 구조 (SvelteKit)
-
 ```
 src/
 ├── routes/                 # 파일 기반 라우팅
@@ -23,9 +19,7 @@ src/
 ├── params/                 # 라우트 파라미터 매처
 └── hooks.server.ts        # 폼 액션, 핸들
 ```
-
 ## 핵심 패턴
-
 - 반응성: `$state`, `$derived`, `$effect` (Svelte 5 runes)
 - `{#each}`, `{#if}`, `{#await}` 템플릿 블록
 - props: `let { name } = $props()` (Svelte 5)
@@ -33,9 +27,7 @@ src/
 - SvelteKit: `load()` 함수로 서버 데이터 페칭
 - 폼 액션: `use:enhance`로 프로그레시브 향상
 - 스토어: `writable()`, `derived()` (Svelte 4) / `$state()` 공유 (Svelte 5)
-
 ## 주의사항
-
 - Svelte 5 runes: `$state`, `$derived`, `$effect`, `$props`, `$bindable`
 - SvelteKit `+page.server.ts`에서만 `load` 함수가 서버 실행
 - `$lib/` alias로 `src/lib/` 쉽게 임포트
