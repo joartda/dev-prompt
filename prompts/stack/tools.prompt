@@ -42,7 +42,7 @@
 |Python|black + ruff|`pyproject.toml`|
 |TypeScript / JS|prettier + ESLint|`.prettierrc`, `.eslintrc`|
 |Go|gofmt / goimports|—|
-|Rust|rustfmt|`rustfmt.toml`|
+|Rust|rustfmt|—|
 |Java|google-java-format|—|
 |Kotlin|ktlint|`.editorconfig`|
 |C#|dotnet-format|`.editorconfig`|
