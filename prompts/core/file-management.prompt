@@ -1,0 +1,94 @@
+# 파일 관리 및 문서화 규칙
+
+## `.ai.dev` 폴더
+
+Agent가 생성하거나 관리하는 모든 파일은 **프로젝트 루트의 `.ai.dev/` 폴더** 안에 위치합니다.
+
+```
+<project-root>/
+└── .ai.dev/
+    ├── AGENT_CONFIG.md        ← 모델·환경 설정 (최초 1회 자동 생성)
+    ├── CODEBASE_PROFILE.md    ← 코드베이스 프로파일 캐시
+    ├── context/               ← 컨텍스트 관리 폴더
+    │   ├── SUMMARY.md         ← 전체 대화 압축 요약 (항상 최신)
+    │   ├── INDEX.md           ← 아카이브 전체 인덱스
+    │   └── archive/
+    │       ├── session_YYYYMMDD_001.md
+    │       └── ...
+    ├── DECISIONS.md           ← 프로젝트 결정 및 ADR
+    ├── ARCHITECTURE.md        ← 아키텍처 다이어그램 및 계층 설명
+    ├── API_REFERENCE.md       ← API 엔드포인트 및 스키마 (OpenAPI 미사용 시)
+    ├── DATABASE_SCHEMA.md     ← ERD 및 마이그레이션 이력
+    ├── TESTING.md             ← 테스트 실행법 및 커버리지 현황
+    ├── SECURITY.md            ← 보안 정책, 인증·인가 방식
+    ├── FRAMEWORK_GUIDELINES.md ← 프레임워크 핵심 규칙 요약
+    ├── ERRORS.md              ← 에러 코드 사전 정의 목록
+    └── CHANGELOG.md           ← 버전별 변경 이력
+```
+
+> **규칙**
+> - 프로젝트 최초 실행 시 Agent는 `.ai.dev/` 폴더와 `DECISIONS.md`를 가장 먼저 생성합니다.
+> - `.ai.dev/` 폴더는 `.gitignore`에 추가하지 않습니다. 팀 전체가 공유하고 버전 관리해야 합니다.
+> - 프로젝트 루트의 `README.md`는 사람이 직접 작성·관리하며, Agent가 임의로 덮어쓰지 않습니다. Agent는 갱신이 필요한 내용을 제안하는 방식으로 협력합니다.
+> - `.ai.dev/` 내 파일 수정 시에도 일반 코드 변경과 동일하게 Conventional Commits 형식으로 커밋합니다.
+
+---
+
+## 문서화
+
+### 문서 목록
+
+모든 AI 관리 문서는 `.ai.dev/` 폴더에 위치합니다. 프로젝트 루트의 `README.md`만 사람이 직접 관리합니다.
+
+| 문서 | 위치 | 내용 | 갱신 트리거 |
+|------|------|------|-------------|
+| `README.md` | 프로젝트 루트 | 개요, 실행 방법, 환경 변수 | 초기·구조 변경 (사람이 관리) |
+| `AGENT_CONFIG.md` | `.ai.dev/` | 모델·환경 설정 | 최초 1회 자동 생성, `reconfigure agent` 시 |
+| `CODEBASE_PROFILE.md` | `.ai.dev/` | 코드베이스 프로파일 캐시 | 코드 변경 시 자동 업데이트 |
+| `DECISIONS.md` | `.ai.dev/` | 사용자 선택, ADR, 버그 수정 의도 기록 | 결정 변경, 버그 수정 |
+| `ARCHITECTURE.md` | `.ai.dev/` | 다이어그램, 계층, ADR | 새 모듈·패턴 변경 |
+| `API_REFERENCE.md` (또는 OpenAPI) | `.ai.dev/` | 엔드포인트, 스키마 | API 변경 |
+| `DATABASE_SCHEMA.md` | `.ai.dev/` | ERD, 마이그레이션 이력 | 스키마 변경 |
+| `TESTING.md` | `.ai.dev/` | 테스트 실행법, 커버리지 | 테스트 전략 변경 |
+| `SECURITY.md` | `.ai.dev/` | 보안 정책, 인증·인가 | 보안 규칙 변경 |
+| `FRAMEWORK_GUIDELINES.md` | `.ai.dev/` | 프레임워크 핵심 규칙 요약 | 프레임워크 변경 |
+| `ERRORS.md` | `.ai.dev/` | 에러 코드 사전 정의 목록 | 새 에러 코드 추가 |
+| `CHANGELOG.md` | `.ai.dev/` | 버전별 변경 이력 (Keep a Changelog 형식) | 모든 릴리즈 |
+| `SUMMARY.md` | `.ai.dev/context/` | 전체 대화 압축 요약 | 컨텍스트 압축 시 |
+| `INDEX.md` | `.ai.dev/context/` | 아카이브 전체 인덱스 | 아카이브 생성 시 |
+
+### 다이어그램 as Code
+
+아키텍처 다이어그램은 이미지가 아닌 코드로 작성하여 Git으로 변경 이력을 추적할 수 있도록 합니다.
+
+| 도구 | 특징 | 적용 대상 |
+|------|------|-----------|
+| **Mermaid** | 마크다운 내장, GitHub 네이티브 지원 | 간단한 시퀀스·플로우·ERD |
+| **PlantUML** | 풍부한 UML 다이어그램 지원 | 클래스·컴포넌트·배포 다이어그램 |
+| **Structurizr DSL** | C4 모델 전용 DSL | 시스템 컨텍스트·컨테이너·컴포넌트 다이어그램 |
+| **D2** | 현대적 선언형 다이어그램 언어 | 인프라·네트워크 토폴로지 |
+
+### ADR (Architecture Decision Records) 작성
+
+중요한 아키텍처 결정은 `adr-tools` 또는 유사한 도구를 사용하여 일관된 형식으로 기록합니다. 각 ADR은 결정의 맥락, 고려한 대안, 결정 내용, 결과 및 트레이드오프를 포함합니다.
+
+### AI 친화적 문서화 (LLM-Friendly Formatting)
+
+AI 에이전트가 문서의 규칙과 제약 조건을 정확히 파싱할 수 있도록, 핵심 지침은 구조화된 태그로 구분합니다.
+
+- 필수 보안 규칙은 `<rules type="security" severity="critical">...</rules>` 내에 배치
+- 코딩 컨벤션은 `<constraints>...</constraints>` 태그로 감싸 명확히 구분
+- 금지된 패턴은 `<avoid>...</avoid>` 태그로 명시적 표시
+- 권장 사항은 `<recommend>...</recommend>` 태그로 구분
+
+### 자동화된 지식 관리
+
+- 코드베이스에서 자동으로 최신 API 문서를 생성하는 파이프라인 구성
+- 에러 코드 사전과 상태 코드 매핑을 코드로부터 자동 추출
+- 생성형 AI를 활용하여 릴리스 노트와 변경 로그 초안 자동 생성
+
+### 업데이트 규칙
+
+- PR 병합 전 관련 문서 미업데이트 시 CI 실패
+- 중요 결정은 ADR 형식으로 기록
+- 방향 변경 시 `ARCHITECTURE.md` + `DECISIONS.md` 동시 수정 후 커밋

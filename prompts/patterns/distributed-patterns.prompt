@@ -1,0 +1,22 @@
+# 분산 시스템 및 마이크로서비스 패턴
+
+## 특화 패턴 표
+
+| 패턴 | 설명 | 적용 예 |
+|------|------|---------|
+| Saga | 분산 트랜잭션의 일관성 보장 (보상 트랜잭션) | 주문-결제-재고 시스템 |
+| Outbox | 이벤트 발행과 DB 변경의 원자적 처리 | CDC(Change Data Capture) 연계 |
+| BFF (Backend for Frontend) | 클라이언트별 최적화된 API 게이트웨이 | 모바일/웹별 전용 백엔드 |
+| API Gateway | 단일 진입점, 인증, 라우팅, 속도 제한 | Kong, KrakenD, Apache APISIX |
+| Service Mesh | 서비스 간 통신의 관측·보안·제어 | Istio, Linkerd |
+| Strangler Fig | 레거시 시스템의 점진적 마이그레이션 | 모놀리스 → MSA 전환 |
+| CQRS | 읽기/쓰기 분리 | 읽기·쓰기 트래픽 비율 극단적 |
+| Event Sourcing | 상태 변경을 이벤트로 저장 | 금융, 주문 시스템 |
+
+## 적용 원칙
+
+- 분산 시스템은 네트워크 신뢰성을 가정하지 않음
+- 최종 일관성(Eventual Consistency)을 기본으로 설계
+- 장애는 예상하고, 격리와 복구를 자동화
+- 관측 가능성(분산 추적, 메트릭, 로그)은 선택이 아닌 필수
+- 서비스 경계는 비즈니스 도메인(DDD Bounded Context) 기준

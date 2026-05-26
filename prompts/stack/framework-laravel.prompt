@@ -1,0 +1,52 @@
+# Laravel 프레임워크 규칙
+
+## 공식 가이드라인
+
+- Laravel 공식 문서 우선: https://laravel.com
+- MVC 패턴, Eloquent ORM, Blade 템플릿
+- PHP 생태계 최대 커뮤니티
+
+## 프로젝트 구조
+
+```
+app/
+├── Http/
+│   ├── Controllers/        # 컨트롤러
+│   ├── Middleware/          # 미들웨어
+│   └── Requests/           # 폼 요청 검증
+├── Models/                 # Eloquent 모델
+├── Services/               # 비즈니스 로직
+├── Jobs/                   # 큐 작업
+├── Events/                 # 이벤트
+├── Listeners/              # 리스너
+└── Exceptions/             # 예외 처리
+routes/
+├── web.php                 # 웹 라우트
+└── api.php                 # API 라우트
+database/
+└── migrations/
+resources/views/            # Blade 템플릿
+config/                     # 설정 파일
+```
+
+## 핵심 패턴
+
+- Eloquent: `User::find($id)`, `User::where('email', $email)->first()`
+- 리소스 컨트롤러: `php artisan make:controller UserController --resource`
+- 검증: `StoreUserRequest` (Form Request) 또는 `$request->validate([...])`
+- API 리소스: `UserResource::collection(User::paginate())`
+- 큐: `ProcessPodcast::dispatch($podcast)` (ShouldQueue)
+- 이벤트: `event(new UserRegistered($user))` → 리스너가 처리
+- 정책: `UserPolicy`로 인가 로직
+- 스코프: `scopeActive()` (Eloquent 로컬 스코프)
+
+## 주의사항
+
+- N+1 방지: `User::with('posts')->get()` (eager loading)
+- `php artisan make:model -mcf` (모델 + 마이그레이션 + 팩토리 + 컨트롤러)
+- `php artisan optimize`로 설정 캐싱
+- `config/app.php`에서 `debug=false` (production)
+- `php artisan route:list`로 라우트 목록 확인
+- `Laravel Telescope`로 로컬 디버깅
+- `Laravel Horizon`으로 Redis 큐 관리
+- Octane: Swoole/RoadRunner로 성능 향상

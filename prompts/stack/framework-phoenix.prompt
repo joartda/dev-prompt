@@ -1,0 +1,50 @@
+# Phoenix 프레임워크 규칙
+
+## 공식 가이드라인
+
+- Phoenix 공식 문서 우선: https://phoenixframework.org
+- Elixir 기반, BEAM VM 최적화
+- WebSocket/LiveView, 실시간 애플리케이션에 강점
+
+## 프로젝트 구조
+
+```
+lib/my_app/
+├── my_app.ex               # Application 모듈 (Supervisor tree)
+├── repo.ex                 # Ecto 리포지토리 설정
+├── accounts/               # Context (도메인 경계)
+│   ├── accounts.ex
+│   ├── user.ex             # Ecto 스키마
+│   └── user_token.ex
+├── web/
+│   ├── endpoint.ex         # 엔드포인트 설정
+│   ├── router.ex           # 라우터
+│   ├── controllers/        # 컨트롤러
+│   ├── views/              # 뷰 (JSON/HTML 렌더링)
+│   ├── templates/          # HEEx 템플릿
+│   └── live/               # LiveView 모듈
+config/                     # 설정 파일
+priv/
+├── repo/migrations/        # Ecto 마이그레이션
+└── static/
+```
+
+## 핵심 패턴
+
+- Context: 도메인 경계 (Accounts, Content, Payments 등)
+- Ecto: `MyApp.Repo.get(User, id)`, `changeset/2`로 검증
+- 라우터: `scope "/", MyAppWeb do ... end`, `live "/dashboard", DashboardLive`
+- JSON API: `render(conn, :show, user: user)` (`view` 모듈)
+- LiveView: `mount/3`, `handle_event/3`, `render/1`
+- PubSub: `Phoenix.PubSub.broadcast(MyApp.PubSub, "topic", message)`
+- 채널: WebSocket 기반 실시간 양방향 통신
+
+## 주의사항
+
+- `mix phx.gen.context`로 Context + 스키마 + 마이그레이션 생성
+- `mix phx.gen.live`로 LiveView 리소스 생성
+- Ecto: `Repo.insert(changeset)`, `Repo.update(changeset)`
+- `Repo.preload(post, [:comments])`로 N+1 방지
+- `config.exs`로 환경별 설정 (dev/test/prod)
+- Phoenix는 Convention over Configuration
+- LiveView: `@myself`로 컴포넌트 참조, `send_update`로 업데이트

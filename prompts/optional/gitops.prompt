@@ -1,0 +1,24 @@
+# GitOps (K8s 배포) — Q15-6 선택 시 로드
+
+## 추천 도구
+
+| 도구 | 특징 |
+|------|------|
+| ArgoCD | Kubernetes 네이티브, 선언적 배포, 자동 동기화 |
+| Flux | 경량, GitOps Toolkit 기반, 자동 정책 |
+
+## 적용 원칙
+
+- Git 저장소가 유일한 진실 공급원 (Single Source of Truth)
+- 모든 K8s 매니페스트는 Git으로 버전 관리
+- ArgoCD/Flux가 Git 상태와 K8s 클러스터 상태를 지속 동기화
+- PR 병합 = 배포 (승인 게이트 설정 가능)
+- 카나리 배포: Flagger로 점진적 트래픽 전환
+
+## 주의사항
+
+- 시크릿: Sealed Secrets 또는 External Secrets로 Git에서 암호화
+- Helm 차트 또는 Kustomize로 K8s 매니페스트 템플릿화
+- `argocd app sync`로 수동 동기화 (자동 동기화 설정 전)
+- 클러스터 부트스트래핑: ArgoCD/Flux 자기 자신을 Git으로 관리
+- Multi-cluster: Hub Cluster 하나로 여러 클러스터 관리

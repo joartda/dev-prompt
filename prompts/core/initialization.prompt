@@ -1,0 +1,80 @@
+# 초기화 절차 (Initialization)
+
+> 프로젝트에서 처음 실행할 때의 전체 절차입니다. 명시적 트리거 없이는 자동으로 시작하지 않습니다.
+
+### 트리거 명령어
+
+```
+"이 프로젝트를 초기화해줘"
+또는
+"initialize project"
+```
+
+### 초기화 실행 순서
+
+```
+Step 1. AGENT_CONFIG.md 확인
+  → 없음: 모델 자가 식별 시도
+           → 성공: 스펙 조회 → AGENT_CONFIG.md 생성
+           → 실패: 사용자에게 1회 질문 → AGENT_CONFIG.md 생성
+  → 있음: 로드 후 Step 2로
+
+Step 2. .ai.dev/ 폴더 구조 생성
+  → .ai.dev/ 없으면 생성
+  → 기본 파일들 생성 (DECISIONS.md, ARCHITECTURE.md 등)
+  → context/ 폴더 생성
+
+Step 3. CODEBASE_PROFILE.md 확인
+  → 없음: "코드베이스 프로파일을 지금 생성할까요?" 확인 후 실행
+  → 있음: 신선도 확인
+  → 신규 프로젝트이며 파일이 3개 미만이면 지연 생성
+
+Step 4. SUMMARY.md 확인
+  → 있음: 이전 컨텍스트 복원 알림
+  → 없음: 새 프로젝트로 시작
+
+Step 5. 초기화 완료 보고:
+  "[초기화 완료]
+   모델: {model_name} ({effective_max:,} tokens)
+   컨텍스트 압축 임계값: {compression_threshold:,} tokens
+   프로파일: {있음/없음}
+   이전 컨텍스트: {있음/없음}
+   Q0부터 시작할까요?"
+```
+
+### 경량 초기화 (소형 프로젝트)
+
+DECISIONS.Q3 = A(소형) 또는 `initialize project --quick` 사용 시:
+
+```
+Step 1. AGENT_CONFIG.md 확인·생성
+Step 2. .ai.dev/ 폴더 + DECISIONS.md 생성
+Step 3. CODEBASE_PROFILE.md: 3개 파일 생성 후 지연 생성으로 예약
+Step 4. SUMMARY.md: 생성만 (빈 상태)
+Step 5. Q0~Q4만 진행, Q5~Q8 기본값 자동 적용
+```
+
+## Agent 작업 흐름 (통합)
+
+```
+0.  .ai.dev/ 폴더 및 DECISIONS.md 생성           → 프로젝트 최초 실행 시 가장 먼저 수행
+0-1. AGENT_CONFIG.md 확인·생성                   → 모델 자가 식별, 없으면 사용자 1회 확인
+0-2. CODEBASE_PROFILE.md 확인·생성               → 코드베이스 전체 스캔 및 프로파일 캐시
+1.  초기 질문 및 프로젝트 정의                       → Q0에서 유형 확인 후 Q1~Q16 그룹별 진행 및 DECISIONS.md 갱신
+2.  개발 환경 및 IDE 추천                           → 개발 환경 설정
+3.  방법론·아키텍처 결정                             → .ai.dev/ARCHITECTURE.md 초안
+4.  기술 스택 및 라이브러리 선정                      → README.md 작성 (사용자 협력)
+5.  보안 규칙 문서화                                 → .ai.dev/SECURITY.md
+6.  프레임워크 가이드라인                             → .ai.dev/FRAMEWORK_GUIDELINES.md
+7.  핵심 모듈 구현 (TDD)                            → 테스트 → 코드 → 리팩토링 (마이그레이션 시 기존 분석 선행)
+8.  에러 처리 표준화                                 → .ai.dev/ERRORS.md
+9.  로깅 추가
+10. 문서 동기화                                      → .ai.dev/ 내 관련 파일 갱신
+11. Git 커밋                                        → Conventional Commits + PR
+12. 빌드·메모리 최적화
+13. 보안 감사                                        → SAST + 의존성 검사 + SBOM 생성
+14. 최종 문서 일관성 검사                             → .ai.dev/ 내 모든 문서와 코드 정합성 확인
+15. 인프라/CI-CD 파이프라인 구성 및 부하 테스트 스크립트 작성 (사용자 선택 시)
+16. MLOps 파이프라인 구성 (AI/ML 프로젝트 시)
+17. 컨텍스트 압축 및 아카이브 (압축 조건 충족 시)      → .ai.dev/context/ 에 세션 보존
+```

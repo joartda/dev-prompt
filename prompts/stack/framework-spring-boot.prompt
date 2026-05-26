@@ -1,0 +1,44 @@
+# Spring Boot 프레임워크 규칙
+
+## 공식 가이드라인
+
+- Spring Boot 공식 문서 우선: https://spring.io/projects/spring-boot
+- 엔터프라이즈 표준, 풍부한 생태계
+- 의존성 주입, AOP, 선언적 트랜잭션
+
+## 프로젝트 구조
+
+```
+src/main/java/com/example/
+├── Application.java        # @SpringBootApplication
+├── config/                 # 설정 클래스 (@Configuration)
+├── controller/             # REST 컨트롤러 (@RestController)
+├── service/                # 서비스 레이어 (@Service)
+├── repository/             # 데이터 접근 (@Repository, JPA)
+├── domain/                 # 도메인 엔티티, VO
+├── dto/                    # 요청/응답 DTO (+ 검증)
+├── exception/              # 글로벌 예외 처리 (@ControllerAdvice)
+├── security/               # Security 구성 (@EnableWebSecurity)
+└── common/                 # 공통 유틸리티
+```
+
+## 핵심 패턴
+
+- `@RestController`: REST API 엔드포인트
+- `@Service`: 비즈니스 로직 (트랜잭션 경계)
+- `@Repository`: 데이터 접근 (JPA 예외 변환)
+- `@Autowired` / 생성자 주입 (필드 주입 지양)
+- `@Transactional`: 트랜잭션 관리 (readOnly=true 최적화)
+- `@Valid` + `@Validated`: DTO 검증 (Bean Validation)
+- `@ControllerAdvice`: 글로벌 예외 처리 (RFC 7807 응답)
+- `@ConfigurationProperties`: 타입 안전 설정 바인딩
+
+## 주의사항
+
+- 생성자 주입 권장 (`final` 필드 + `@RequiredArgsConstructor`)
+- `@PostConstruct` / `@PreDestroy`: 초기화/정리
+- `application.yml`로 프로파일별 설정 (dev/prod)
+- `spring.jpa.open-in-view = false` (OSIV 비활성화 권장)
+- Flyway/Liquibase로 마이그레이션 자동화
+- `spring-boot-starter-actuator`: 헬스 체크, 메트릭
+- `spring-boot-starter-test`: JUnit 5, Mockito, Testcontainers 통합

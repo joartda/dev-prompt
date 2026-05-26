@@ -1,0 +1,45 @@
+# FastAPI 프레임워크 규칙
+
+## 공식 가이드라인
+
+- FastAPI 공식 문서 우선: https://fastapi.tiangolo.com
+- Pydantic v2 기반 검증 (v1에서 마이그레이션 주의)
+- Starlette 기반, async 네이티브
+
+## 프로젝트 구조
+
+```
+app/
+├── main.py              # FastAPI 앱 생성, 라우터 등록
+├── config.py            # 설정 관리 (pydantic-settings)
+├── api/
+│   ├── __init__.py
+│   └── v1/
+│       ├── endpoints/   # 라우트 핸들러
+│       └── deps.py      # 의존성 주입 (Depends)
+├── core/
+│   ├── security.py      # 인증/인가 (JWT, OAuth2)
+│   └── database.py      # DB 연결 (async session)
+├── models/              # SQLAlchemy 모델
+├── schemas/             # Pydantic 스키마 (요청/응답)
+├── services/            # 비즈니스 로직
+└── tests/
+```
+
+## 핵심 패턴
+
+- 의존성 주입: `Depends()` (경로 작동 함수, 중첩 의존성)
+- 검증: Pydantic v2 (`BaseModel`, `Field`, `model_validator`)
+- DB 세션: `async with SessionLocal() as session` (context manager)
+- 설정: `pydantic-settings` (`BaseSettings`)
+- CORS: `CORSMiddleware` (허용 Origin 명시)
+- 태스크: `BackgroundTasks` (간단한 백그라운드), Celery/arq (무거운 작업)
+
+## 주의사항
+
+- `sync` 경로 함수는 스레드 풀에서 실행 (async와 혼용 시 성능 주의)
+- Pydantic v1에서 v2: `validator` → `field_validator`, `root_validator` → `model_validator`
+- DB ORM: SQLAlchemy 2.0 스타일 (`select()` 기반) 권장
+- `response_model` 사용으로 자동 검증/직렬화
+- `status_code` 명시로 HTTP 상태 코드 문서화
+- OpenAPI 태그로 엔드포인트 그룹화

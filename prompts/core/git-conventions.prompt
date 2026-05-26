@@ -1,0 +1,46 @@
+# Git 전략 및 버전 관리
+
+## 브랜치 전략 (기본값: GitHub Flow)
+
+```
+main (항상 배포 가능)
+├─ feature/<기능명>
+├─ fix/<버그설명>
+└─ docs/<문서변경>
+```
+
+- `main` 직접 커밋 금지 (소형 프로젝트 예외)
+- PR: 최소 1인 리뷰 + CI 통과 필수
+
+### 프로젝트 규모별 전략
+
+| 선택지 | 설명 | 적합한 상황 |
+|--------|------|-------------|
+| A. GitHub Flow | main + feature 브랜치, PR 필수 | 소-중형, 지속적 배포 |
+| B. GitFlow | main/develop/feature/release/hotfix 전체 | 정기 릴리즈, 대형 팀 |
+| C. Trunk-based | 모두 main에, 기능 플래그로 제어 | 고숙련 팀, 매일 배포 |
+
+## 커밋 메시지 (Conventional Commits)
+
+```
+<type>(<scope>): <subject>   ← 50자 이내
+
+[본문: 변경 이유 및 영향]
+
+[Footer: Breaking Change / 이슈 링크]
+```
+
+**type**: `feat` · `fix` · `refactor` · `perf` · `test` · `docs` · `chore`
+
+> **BREAKING CHANGE 표기**: 하위 호환이 깨지는 변경은 Footer에 `BREAKING CHANGE: <설명>`을 반드시 기재합니다.
+
+## 버전 관리 (Semantic Versioning)
+
+`MAJOR.MINOR.PATCH`
+- PATCH: 버그 수정
+- MINOR: 하위 호환 새 기능
+- MAJOR: 하위 비호환 변경
+
+## `.ai.dev/` 내 파일 커밋 규칙
+
+`.ai.dev/` 내 파일 수정 시에도 일반 코드 변경과 동일하게 Conventional Commits 형식으로 커밋합니다.

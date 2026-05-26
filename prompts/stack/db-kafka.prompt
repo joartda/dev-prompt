@@ -1,0 +1,26 @@
+# Kafka / Redpanda 규칙
+
+## 특성
+
+- 분산 이벤트 스트리밍 플랫폼
+- 발행-구독(Pub/Sub), 로그 수집, CDC, 이벤트 소싱
+- Redpanda: Kafka 호환, 더 높은 성능 (JVM 불필요)
+- 메시지 지속성: 디스크 기반, 설정 가능한 보존 기간
+
+## 토픽 설계
+
+- 토픽: 이벤트 카테고리 (예: `order.created`, `payment.processed`)
+- 파티션: 병렬 처리 단위 (컨슈머 그룹 내 최대 병렬성)
+- 키: 동일 키 → 동일 파티션 (순서 보장)
+- 복제 팩터: `replication.factor >= 3` (production)
+- retention: `retention.ms` (시간) 또는 `retention.bytes` (크기)
+
+## 주의사항
+
+- Exactly-once: 트랜잭션 + idempotent producer (EOS 모드)
+- At-least-once: 가장 일반적, 중복 허용하는 컨슈머 설계
+- 컨슈머 lag 모니터링 필수: Burrow, Kafka Lag Exporter
+- 메시지 크기 제한: 기본 1MB (대용량은 `max.message.bytes`)
+- `__consumer_offsets`: 컨슈머 오프셋 저장 내부 토픽
+- 스키마 레지스트리: Avro / Protobuf / JSON Schema로 스키마 진화 관리
+- KSQL / ksqlDB: 스트림 처리 (실시간 변환/집계)

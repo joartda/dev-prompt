@@ -1,0 +1,43 @@
+# React 프론트엔드 규칙
+
+## 공식 가이드라인
+
+- React 공식 문서 우선: https://react.dev
+- Next.js / Vite + React가 일반적인 조합
+- React 19: Server Components, Actions, `use()`, improved hooks
+
+## 프로젝트 구조
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/             # UI 컴포넌트
+│   ├── ui/                 # 기본 UI (Button, Input 등)
+│   ├── shared/             # 공유 컴포넌트
+│   └── features/           # 기능별 컴포넌트
+├── hooks/                  # 커스텀 훅
+├── lib/                    # 유틸리티
+├── stores/                 # 상태 관리 (Zustand, Jotai)
+└── styles/                 # 스타일 (CSS Modules, Tailwind)
+```
+
+## 핵심 패턴
+
+- 컴포넌트: 함수형 + `useState`, `useEffect`, `useCallback`, `useMemo`
+- 서버 컴포넌트 (Next.js): 기본값, 직접 DB/API 호출
+- 클라이언트 컴포넌트: `"use client"`, 상태/이펙트/이벤트 필요 시
+- 상태 관리: Zustand (전역), TanStack Query (서버 상태), Context (테마)
+- 라우팅: Next.js App Router (파일 기반) 또는 React Router
+- 스타일: Tailwind CSS, CSS Modules, styled-components
+
+## 주의사항
+
+- `useEffect` 의존성 배열 올바르게 관리 (렌더링 루프 방지)
+- `key` prop: 리스트 렌더링 시 고유 키 필수 (인덱스 금지)
+- 과도한 `useMemo`/`useCallback` 금지 (측정 후 적용)
+- 이미지: `next/image` (Next.js) 최적화 활용
+- 폼: React Hook Form + Zod 스키마 검증
+- `"use client"`는 최소화 (서버 컴포넌트 혜택 유지)
+- React 19: `use()`로 Promise 직접 읽기, Server Actions

@@ -1,0 +1,104 @@
+# Python 언어 규칙
+
+## Python 버전
+
+- Python 3.12+ 권장
+- Python 3.13+: 실험적 free-threading 지원 (GIL 선택적 해제)
+
+## 핵심 라이브러리
+
+| 분류 | 라이브러리 |
+|------|-----------|
+| 웹 | FastAPI · Django · Flask |
+| ORM | SQLAlchemy · Django ORM · Tortoise-ORM (async) |
+| 마이그레이션 | Alembic · Django migrations |
+| 검증 | Pydantic · marshmallow |
+| 비동기 | asyncio · aiohttp · httpx |
+| 태스크 큐 | Celery · arq · dramatiq |
+| 테스트 | pytest · pytest-asyncio · factory-boy · Faker · testcontainers-python |
+| 정적 분석 | ruff · mypy · bandit |
+| MLOps | MLflow · DVC · Weights & Biases · BentoML · Ray Serve · Feast · Great Expectations |
+
+## 비동기 런타임 핵심 규칙
+
+- I/O 바운드 작업: `async def` 사용
+- CPU 바운드 작업: `run_in_executor` 또는 별도 프로세스로 오프로드
+- 이벤트 루프 차단 금지
+- `asyncio.gather`로 다수 비동기 작업 병렬 처리
+- `asyncio.wait_for`로 타임아웃 설정
+
+## 테스트 도구
+
+| 용도 | 도구 |
+|------|------|
+| 단위/통합 | pytest |
+| 비동기 | pytest-asyncio |
+| 목(Mock) | unittest.mock, pytest-mock |
+| 컨테이너 | testcontainers-python |
+| 속성 기반 | Hypothesis |
+| 팩토리 | factory-boy, Faker |
+
+## 로깅
+
+| 도구 | 특징 |
+|------|------|
+| structlog | 구조화 로깅, JSON 출력, 파이프라인 방식 |
+| loguru | 간편한 설정, 컬러 출력, 자동 순환 |
+
+## 포맷터 및 린터
+
+| 도구 | 용도 | 설정 파일 |
+|------|------|-----------|
+| black | 코드 포맷터 | `pyproject.toml` |
+| ruff | 린터 + 포맷터 (black 호환) | `pyproject.toml` |
+| mypy | 정적 타입 검사 | `pyproject.toml` |
+
+## 빌드 및 최적화
+
+- 패키지 관리: `pyproject.toml` 기반 (PEP 621)
+- 의존성 설치: `pip install --no-cache-dir`
+- 메모리 프로파일링: `memory_profiler`
+- 프로파일링: `cProfile`, `py-spy`
+- 대용량 데이터 처리: Generator, `yield`, DB 커서 스트리밍
+- 측정(프로파일링) 없는 최적화 금지
+
+## 보안 도구
+
+| 도구 | 용도 |
+|------|------|
+| bandit | SAST (정적 보안 분석) |
+| pip-audit | 의존성 취약점 검사 |
+| safety | 의존성 보안 검사 |
+
+## 가상 환경
+
+- `venv` (표준 라이브러리)
+- `virtualenv`
+- `poetry` (의존성 + 가상 환경 통합 관리)
+
+## 공통 비동기 패턴
+
+```python
+# 병렬 처리
+import asyncio
+results = await asyncio.gather(task1(), task2(), task3())
+
+# 타임아웃
+try:
+    result = await asyncio.wait_for(long_task(), timeout=5.0)
+except asyncio.TimeoutError:
+    # 타임아웃 처리
+
+# CPU 작업 오프로드
+result = await asyncio.get_event_loop().run_in_executor(None, cpu_bound_task)
+
+# 태스크 큐
+# Celery: @app.task 데코레이터 사용
+# arq: async 기반 경량 태스크 큐
+```
+
+## 프레임워크 가이드라인 우선 원칙
+
+선택된 Python 프레임워크(FastAPI, Django 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
+프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
+일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

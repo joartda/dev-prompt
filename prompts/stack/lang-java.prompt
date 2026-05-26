@@ -1,0 +1,96 @@
+# Java / Kotlin 언어 규칙
+
+## Java 버전
+
+- Java 21+ 권장 (LTS)
+- Java 21+: 가상 스레드 (Virtual Threads)로 동시성 개선
+- Kotlin: 코루틴 네이티브, 널 안전성, 보일러플레이트 최소화
+
+## 핵심 라이브러리
+
+| 분류 | 라이브러리 |
+|------|-----------|
+| 웹 | Spring Boot · Ktor (Kotlin) · Micronaut · Quarkus |
+| ORM | Hibernate · Spring Data JPA · jOOQ (타입 안전 쿼리) |
+| 마이그레이션 | Flyway · Liquibase |
+| 검증 | Bean Validation (Jakarta) · Hibernate Validator |
+| 비동기 | CompletableFuture · Project Reactor · Kotlin Coroutines · 가상 스레드(Java 21+) |
+| 태스크 큐 | Spring Batch · Quartz |
+| 테스트 | JUnit 5 · Mockito · Testcontainers · AssertJ |
+| 정적 분석 | SpotBugs · Checkstyle · SonarQube |
+
+## 비동기 런타임 핵심 규칙
+
+- Java: `CompletableFuture`로 비동기 체인, `virtual threads`로 경량 동시성
+- Kotlin: `suspend` 함수 + `Dispatchers.IO` vs `Dispatchers.Default` 구분
+- Reactor: `Mono`/`Flux` 리액티브 스트림, `Scheduler`로 스레드 풀 제어
+- `SupervisorJob`으로 자식 코루틴 실패 격리 (Kotlin)
+
+## 테스트 도구
+
+| 용도 | 도구 |
+|------|------|
+| 단위/통합 | JUnit 5 |
+| 비동기 | Awaitility |
+| 목(Mock) | Mockito |
+| 컨테이너 | Testcontainers |
+| 속성 기반 | jqwik |
+
+## 로깅
+
+| 도구 | 특징 |
+|------|------|
+| SLF4J + Logback | 표준 로깅 파사드, 유연한 appender |
+| Log4j2 | 고성능 비동기 로깅, Lambda 표현식 |
+
+## 포맷터 및 린터
+
+| 도구 | 용도 | 설정 파일 |
+|------|------|-----------|
+| google-java-format | Java 포맷터 | — |
+| ktlint | Kotlin 린터+포맷터 | `.editorconfig` |
+| Checkstyle | Java 코딩 규칙 검사 | `checkstyle.xml` |
+
+## 빌드 도구 및 최적화
+
+- Java: Gradle (Kotlin DSL) 또는 Maven
+- Kotlin: Gradle (Kotlin DSL) 권장
+- GraalVM native-image로 AOT 컴파일 (빠른 시작, 낮은 메모리)
+- G1GC 튜닝, `-Xmx` 메모리 제한 명시
+- Spring Boot: `spring-boot-maven-plugin` 또는 Gradle bootJar
+
+## 보안 도구
+
+| 도구 | 용도 |
+|------|------|
+| SpotBugs | 바이트코드 수준 버그 탐지 |
+| SonarQube | 정적 분석 + 보안 취약점 |
+| OWASP Dependency-Check | 의존성 취약점 검사 |
+
+## 공통 패턴
+
+```kotlin
+// Kotlin: 안전한 널 처리
+val result = service.findUser(id) ?: throw NotFoundException("User not found")
+
+// Java: 가상 스레드
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    executor.submit(() -> processTask());
+}
+
+// Kotlin: 코루틴
+suspend fun fetchUser(id: String): User = withContext(Dispatchers.IO) {
+    repository.findById(id)
+}
+
+// Reactor: 리액티브 체인
+flux.map(this::transform)
+    .filter(this::isValid)
+    .subscribeOn(Schedulers.parallel())
+```
+
+## 프레임워크 가이드라인 우선 원칙
+
+선택된 프레임워크(Spring Boot, Ktor 등)의 공식 가이드라인이 일반 규칙보다 우선합니다.
+프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
+일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

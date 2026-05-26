@@ -1,0 +1,44 @@
+# 관측 가능성 (Observability) — Q14 선택 시 로드
+
+## 확장 스택
+
+대규모 시스템에서는 로그(Logs), 메트릭(Metrics), 분산 추적(Traces) 3가지를 연동해야 합니다.
+
+| 영역 | 무료/오픈소스 스택 | 상용/SaaS 스택 |
+|------|--------------------|----------------|
+| 메트릭 (Metrics) | Prometheus + Grafana | Datadog, New Relic |
+| 분산 추적 (Traces) | Jaeger, Zipkin, Tempo | Datadog APM, Sentry |
+| 로그 집중화 (Logs) | ELK Stack, Loki | Datadog, Splunk |
+| 오류 수집 (Errors) | Sentry (Self-hosted) | Sentry (Cloud) |
+| 통합 표준 | OpenTelemetry (Otel) | 모든 관측 데이터의 수집 표준으로 적용 권장 |
+
+## OpenTelemetry 연동
+
+- 마이크로서비스 또는 분산 시스템 간 통신 시 HTTP 헤더(`traceparent`)를 통해 `trace_id`를 반드시 전파
+- 언어별 SDK: OpenTelemetry SDK (Python, JS, Go, Java 등)
+- Exporter: OTLP → Collector → 백엔드 (Prometheus, Jaeger, Loki)
+- 자동 계측: 언어별 Auto-instrumentation 패키지 제공
+
+## 에러 트래킹 중앙화
+
+- Sentry: 에러 발생 빈도와 스택 트레이스를 중앙 수집
+- Source maps (JS): 프로덕션 난독화 코드의 원본 매핑
+- 알림: 에러 급증 시 Slack/PagerDuty 연동
+
+## 골든 시그널 모니터링
+
+대시보드 구성 시 아래 4대 지표를 필수로 포함합니다.
+
+| 지표 | 설명 | 측정 |
+|------|------|------|
+| Latency (대기 시간) | 요청 처리 시간 | p50, p95, p99 |
+| Traffic (트래픽) | 요청 수 | requests/sec |
+| Errors (에러) | 실패율 | error rate (%) |
+| Saturation (포화도) | 리소스 사용률 | CPU, Memory, DB 커넥션 |
+
+## 설정 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `setup OpenTelemetry for current project` | 현재 언어/프레임워크에 맞는 OpenTelemetry SDK 통합 |
+| `setup monitoring dashboard` | Prometheus + Grafana 대시보드 구성 |

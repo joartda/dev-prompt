@@ -1,0 +1,30 @@
+# CI/CD 파이프라인 — Q15-1 선택 시 로드
+
+## 구성 항목
+
+CI/CD 파이프라인은 아래 단계를 포함합니다.
+
+| 단계 | 도구 | 내용 |
+|------|------|------|
+| 린트 | ESLint, Ruff, golangci-lint 등 | 코드 스타일 검증 |
+| 단위 테스트 | 언어별 테스트 도구 | `npm test`, `pytest`, `go test` |
+| 빌드 | 언어별 빌드 | `npm run build`, `go build` |
+| 타입 검사 | TypeScript, mypy 등 | 정적 타입 검증 |
+| 보안 스캔 | SAST + 의존성 취약점 | Semgrep, Snyk, Trivy |
+| SBOM 생성 | Syft, CycloneDX | 소프트웨어 공급망 투명성 |
+| 컨테이너 이미지 빌드 | Docker BuildKit | 멀티 스테이지 빌드, 이미지 서명 |
+| 배포 | 환경별 배포 | staging → production 승인 게이트 |
+
+## 플랫폼별 설정
+
+| 플랫폼 | 설정 파일 위치 |
+|--------|---------------|
+| GitHub Actions | `.github/workflows/*.yml` |
+| GitLab CI | `.gitlab-ci.yml` |
+| Jenkins | `Jenkinsfile` |
+
+## 명령어
+
+| 명령어 | 동작 |
+|--------|------|
+| `generate CI/CD pipeline for <platform>` | 선택한 플랫폼의 CI/CD 설정 파일 생성 |

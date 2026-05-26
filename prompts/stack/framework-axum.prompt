@@ -1,0 +1,43 @@
+# Axum 프레임워크 규칙
+
+## 공식 가이드라인
+
+- Axum 공식 문서 우선: https://docs.rs/axum
+- Tokio 기반, 타입 안전 라우팅
+- tower (미들웨어) 생태계와 완전 통합
+
+## 프로젝트 구조
+
+```
+src/
+├── main.rs              # 진입점, 라우터 설정
+├── routes/
+│   ├── mod.rs
+│   └── users.rs
+├── handlers/            # 요청 핸들러
+├── middleware/           # 미들웨어
+├── services/            # 비즈니스 로직
+├── repositories/        # 데이터 접근
+├── models/              # 도메인 모델
+├── dto/                 # 요청/응답 DTO
+└── error.rs             # 통합 에러 타입
+```
+
+## 핵심 패턴
+
+- 라우터: `Router::new().route("/users/:id", get(get_user))`
+- Extractor: `Path`, `Query`, `Json`, `State`, `Extension`
+- 응답: `impl IntoResponse` (튜플 `(StatusCode, Json<T>)`)
+- 공유 상태: `Arc<AppState>`를 `State`로 주입
+- 미들웨어: `layer()`로 tower 미들웨어 적용 (`TraceLayer`, `CorsLayer`)
+- 에러: `axum::response::Response` 또는 `(StatusCode, String)` 반환
+
+## 주의사항
+
+- 모든 핸들러는 `async fn` (Tokio 런타임 필요)
+- `State` extractor 사용 시 `Arc` 또는 `Clone` 필수
+- `Json<T>` extractor는 `serde::Deserialize` 필요
+- 커스텀 에러: `IntoResponse` impl + `From` impl으로 통합
+- Tower 미들웨어: `ServiceBuilder`로 체인 구성
+- `tracing`으로 요청 로깅 (Tokio 생태계 표준)
+- `axum-macros`로 `#[debug_handler]` 컴파일 타임 검증

@@ -1,0 +1,45 @@
+# Vue 프론트엔드 규칙
+
+## 공식 가이드라인
+
+- Vue 공식 문서 우선: https://vuejs.org
+- Nuxt.js (SSR/SSG)와 함께 사용 가능
+- Composition API 우선 (Options API보다)
+
+## 프로젝트 구조
+
+```
+src/
+├── components/             # 컴포넌트
+│   ├── ui/                 # 기본 UI
+│   └── shared/             # 공유 컴포넌트
+├── composables/            # Composition API 훅 (useAuth, useFetch)
+├── pages/                  # 페이지 (Vue Router)
+├── stores/                 # Pinia 스토어
+├── layouts/                # 레이아웃
+├── server/                 # Nuxt 서버 (API 라우트)
+├── utils/                  # 유틸리티
+├── assets/                 # 정적 자원
+└── types/                  # TypeScript 타입
+```
+
+## 핵심 패턴
+
+- Composition API: `<script setup>` + `ref()`, `reactive()`, `computed()`
+- `onMounted()`, `watch()`, `watchEffect()` 생명주기
+- Pinia: `defineStore()` (상태 관리)
+- Vue Router: `useRouter()`, `useRoute()`, `<RouterView>`
+- 폼: `v-model` 양방향 바인딩
+- 스타일: `<style scoped>` (컴포넌트 캡슐화)
+- 텔레포트: `<Teleport to="body">` (모달, 툴팁)
+
+## 주의사항
+
+- `ref()`는 `.value`로 접근 (템플릿에서는 자동 언래핑)
+- `reactive()`는 객체만, `ref()`는 모든 타입
+- `watch()`의 deep 옵션은 성능 주의
+- `computed()`는 readonly, setter 필요 시 `{ get, set }`
+- `v-for`에 `:key` 필수
+- `v-if`와 `v-for` 동시 사용 금지 (계산된 속성으로 대체)
+- Nuxt: `useFetch()`, `useAsyncData()`, `useState()`로 SSR 데이터
+- TypeScript: `defineProps<{ name: string }>()` 타입 추론
