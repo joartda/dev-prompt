@@ -1,0 +1,65 @@
+# 비동기 Concern Atom
+concern: async
+triggers: ["async", "await", "Promise", "goroutine", "coroutine", "tokio", "asyncio"]
+load_when: 코드에 비동기 패턴이 포함되어 있을 때
+
+## 핵심 비동기 패턴
+|패턴|설명|
+|------|------|
+|async/await|동기 스타일 비동기 코드 — 모든 최신 언어|
+|gather/all|여러 비동기 작업의 병렬 완료: `asyncio.gather`, `Promise.all`, `tokio::join!`|
+|Queue/Worker|작업을 큐에 넣고 백그라운드 소비: Celery, BullMQ, Asynq, Oban|
+|Circuit Breaker|연속 실패 시 차단: Resilience4j, Polly, failsafe-go|
+|Retry + 지수 백오프|일시적 장애 재시도: tenacity (Python), backoff (Go), Polly (.NET)|
+|Backpressure|느린 소비자 보호|
+|Lazy/Streaming|필요 시점에 생성: Generator, DB 커서, 파일 스트림|
+
+## 필수 비동기 규칙
+1. I/O 바운드 작업: `async/await` 사용
+2. CPU 바운드 작업: 별도 스레드/프로세스로 오프로드 (worker_threads, run_in_executor, tokio::spawn_blocking)
+3. 이벤트 루프 차단 금지
+4. 모든 async 호출에 에러 처리 필수
+5. 모든 외부 호출에 타임아웃 필수
+6. `Promise.all` / `asyncio.gather` / `tokio::join!`로 독립적 작업 병렬 처리
+7. 버퍼 크기 제한 + backpressure 전파
+
+## 언어별 예제
+
+### TypeScript
+```typescript
+const [r1, r2, r3] = await Promise.all([task1(), task2(), task3()]);
+const result = await Promise.race([
+  longTask(),
+  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+]);
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 5000);
+const response = await fetch(url, { signal: controller.signal });
+clearTimeout(timeoutId);
+```
+
+### Python
+```python
+results = await asyncio.gather(task1(), task2(), task3())
+try:
+    result = await asyncio.wait_for(long_task(), timeout=5.0)
+except asyncio.TimeoutError:
+    pass
+result = await asyncio.get_event_loop().run_in_executor(None, cpu_bound_task)
+```
+
+### Go
+```go
+g, ctx := errgroup.WithContext(ctx)
+g.Go(func() error { return task1(ctx) })
+g.Go(func() error { return task2(ctx) })
+if err := g.Wait(); err != nil { }
+ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+defer cancel()
+```
+
+## Circuit Breaker 패턴
+```
+상태: CLOSED → (실패 > 임계값) → OPEN → (타임아웃) → HALF_OPEN → (성공) → CLOSED
+```
+언어별 라이브러리 사용: failsafe-go, resilience4j, polly, tenacity.

@@ -1,0 +1,19 @@
+# SQLite 규칙
+## 특성
+- 파일 기반 관계형 DB, 서버 불필요
+- 로컬 앱, 임베디드, 테스트 환경에 적합
+- 동시 쓰기: 1개만 가능 (파일 레벨 락)
+## 연결 풀 설정
+- 동시 접속 적을 경우 커넥션 풀 불필요
+- WAL 모드: `PRAGMA journal_mode=WAL` (동시 읽기 성능 향상)
+- `PRAGMA busy_timeout = 5000` (락 대기 시간)
+## 주의사항
+- 동시 쓰기 많으면 PostgreSQL 등으로 전환 고려
+- `VARCHAR` 길이 제한 무시됨 (TEXT와 동일)
+- ALTER TABLE 제한적 (일부 변경 불가)
+- 외래키: `PRAGMA foreign_keys = ON` 필수 (기본값 OFF)
+- 네트워크 접근 불가 (파일 기반)
+- 인덱스: B-tree, Covering index, Partial index 지원
+## 마이그레이션 도구
+- 언어 ORM 내장 마이그레이션 사용
+- 단순: 수동 SQL 스크립트

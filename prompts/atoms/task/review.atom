@@ -1,0 +1,85 @@
+# Review Task Atom
+task_types: [review, audit]
+triggers: ["리뷰", "검토", "확인", "컨벤션", "code review", "점검"]
+concerns: [naming, security]
+load_priority: 1
+
+## 형식 준수 규칙
+응답은 반드시 [REVIEW REPORT]로 시작해야 함. 아래에 표시된 정확한 형식을 따를 것.
+다른 내용보다 먼저 텍스트로 출력할 것.
+[REVIEW REPORT]를 생략하면 응답은 NON-COMPLIANT.
+
+## Code Review Protocol
+
+### Review Scope
+리뷰 요청을 받았을 때:
+1. Read target files
+2. Load CODEBASE_PROFILE.md for conventions
+3. Load security.atom if auth/data handling present
+4. Load naming.atom for convention checks
+
+### Review Checklist
+다음 항목을 모두 확인할 것:
+```
+□ Naming conventions match existing codebase?
+□ No unauthorized new dependencies?
+□ Error handling follows project standard (throw vs Result vs Either)?
+□ Async operations have proper error handling?
+□ DB queries use parameterization (no SQL injection)?
+□ No N+1 query patterns?
+□ Connection/ resource cleanup (RAII, with/using, try-with-resources)?
+□ Timeouts on all external calls?
+□ No secrets/sensitive data in logs?
+□ No debug mode / verbose errors in production code?
+□ Input validation on all external inputs?
+□ Appropriate test coverage for changed code?
+□ Scope: only changes relevant to stated purpose?
+□ No mixing of concerns (e.g. refactoring + bug fix in same change)?
+```
+
+### Review Output Format — YOU MUST OUTPUT THIS
+```
+[REVIEW REPORT]
+File: <path>
+Overall: Pass / Needs Work / Critical Issues
+
+Strengths:
+  - (what's done well)
+
+Issues:
+  - [severity] (file:line) — (issue description)
+    Fix: (suggestion)
+
+Convention Violations:
+  - (file:line) — existing pattern: X, current code: Y
+    Fix: (suggestion)
+
+Security Concerns (if any):
+  - (issue + fix)
+
+Summary: (1-2 line verdict)
+```
+
+## Convention Audit
+Trigger: `check conventions in <filename>`
+
+1. Load CODEBASE_PROFILE.md §3 Conventions
+2. Scan target file for:
+   - Naming conflicts (camelCase vs snake_case, PascalCase vs camelCase)
+   - Style inconsistency (indentation, quotes, semicolons)
+   - Component structure deviation
+   - Import style mismatch (named vs default)
+   - Error handling mismatch (throw vs Result vs Either)
+3. Output mismatch list
+
+## Impact Analysis
+Trigger: `impact analysis for <change>`
+
+```
+[IMPACT ANALYSIS]
+Change: <description>
+Directly affected modules: (list)
+Indirectly affected (callers, dependents): (list)
+Risk level: Low / Medium / High
+Recommendation: (proceed / caution / avoid)
+```

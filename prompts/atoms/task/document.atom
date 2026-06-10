@@ -1,0 +1,61 @@
+# Document Task Atom
+task_types: [document, docs]
+triggers: ["문서", "README", "API문서", "다이어그램", "document", "docs", "기록"]
+concerns: [file-management]
+load_priority: 1
+
+## Documentation Update Protocol
+
+### Trigger: `update documentation for current changes`
+1. Collect all changed files
+2. Identify affected documents:
+   - API changes → API_REFERENCE.md
+   - DB schema changes → DATABASE_SCHEMA.md
+   - Architecture changes → ARCHITECTURE.md
+   - New error codes → ERRORS.md
+   - Security changes → SECURITY.md
+   - Version release → CHANGELOG.md
+3. Update all affected documents
+4. Cross-verify consistency between docs and code
+
+### Document Locations
+All AI-managed documents live in `.ai.dev/`. Project root `README.md` is human-managed.
+
+|Document|Location|Content|Update Trigger|
+|------|------|------|------|
+|DECISIONS.md|.ai.dev/|User choices, ADR, bug fix records|Decision changes, bug fixes|
+|ARCHITECTURE.md|.ai.dev/|Diagrams, layers, ADR|New modules, pattern changes|
+|API_REFERENCE.md|.ai.dev/|Endpoints, schemas|API changes|
+|DATABASE_SCHEMA.md|.ai.dev/|ERD, migration history|Schema changes|
+|TESTING.md|.ai.dev/|Test execution, coverage|Test strategy changes|
+|SECURITY.md|.ai.dev/|Security policy, auth|Security rule changes|
+|FRAMEWORK_GUIDELINES.md|.ai.dev/|Framework core rules summary|Framework changes|
+|ERRORS.md|.ai.dev/|Error code dictionary|New error codes added|
+|CHANGELOG.md|.ai.dev/|Version history (Keep a Changelog)|Every release|
+
+### Diagrams as Code
+Use code-based diagrams (not images) for Git traceability:
+|Tool|When|
+|------|------|
+|Mermaid|Simple sequence/flow/ERD (GitHub native)|
+|PlantUML|Rich UML (class/component/deployment)|
+|Structurizr DSL|C4 model (system context/container/component)|
+|D2|Infrastructure/network topology|
+
+### ADR Format
+```markdown
+# ADR-NNN: <Title>
+- Status: Proposed / Accepted / Deprecated / Superseded
+- Context: (why this decision is needed)
+- Decision: (what was decided)
+- Alternatives considered: (options + reasons rejected)
+- Consequences: (tradeoffs)
+- Date: YYYY-MM-DD
+```
+
+### LLM-Friendly Formatting
+For critical rules, use structured tags so agents can parse them:
+- `<rules type="security" severity="critical">...</rules>` for mandatory security rules
+- `<constraints>...</constraints>` for coding conventions
+- `<avoid>...</avoid>` for forbidden patterns
+- `<recommend>...</recommend>` for suggestions

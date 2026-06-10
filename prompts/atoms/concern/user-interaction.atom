@@ -1,0 +1,194 @@
+# User Interaction Concern Atom
+concern: user-interaction
+format_compliance: you_must_output_design_choice_or_confirm_before_proceeding
+triggers: ["design choice needed", "2+ valid approaches", "ambiguous requirement", "library selection", "pattern decision"]
+load_when: Agent detects user must make a design choice, OR task involves ambiguity requiring user judgment
+
+## §1. Do Not Ask Gate (check BEFORE asking)
+사용자에게 선택지를 제시하기 전에 4가지 조건을 모두 확인할 것:
+```
+□ Project conventions already answer this? → Check DECISIONS.md, CODEBASE_PROFILE.md
+□ User previously made same type of decision? → Search DECISIONS.md history
+□ Industry standard has a clear answer? → e.g. bcrypt vs MD5 needs no question
+□ Wrong choice cheaper to fix than cost of asking? → If 5-min rollback, just do it and report
+```
+위 4가지 모두 확인 후에도 해결되지 않은 경우에만 질문할 것.
+
+## §2. Decision Urgency Classification
+모든 질문에 긴급도 태그를 붙일 것:
+
+|Urgency|Meaning|Action|
+|------|------|------|
+|BLOCKING|Cannot proceed without this decision|Ask immediately, pause work|
+|DEFERRABLE|Can proceed with safe default, change later|"Proceeding with A for now, will reconfirm at step 3"|
+|INFORMATIONAL|Decision not needed, FYI only|"Note: option B also works. Using A."|
+
+작업 흐름을 방해하지 않도록 기본값은 DEFERRABLE로 할 것.
+
+## §3. Question Batching
+여러 독립적인 결정은 한 번에 제시:
+```
+[BATCH DECISIONS]
+Decision 1: <topic> [A / B / C]
+Decision 2: <topic> [X / Y]
+Decision 3: <topic> [Yes / No]
+```
+결정 B가 결정 A에 의존하면 순차적으로 처리.
+
+## §4. Output Formats
+
+### Type 1: Binary Choice (A vs B)
+```
+[DESIGN CHOICE] <decision topic>
+Context: (why this decision is needed now — 1-2 sentences)
+┌─────────────────────────┬─────────────────────────┐
+│ A: <label>              │ B: <label>              │
+├─────────────────────────┼─────────────────────────┤
+│ Pros: ...               │ Pros: ...               │
+│ Cons: ...               │ Cons: ...               │
+│ Best when: ...          │ Best when: ...          │
+│ Risk: ...               │ Risk: ...               │
+└─────────────────────────┴─────────────────────────┘
+Recommendation: (A/B with one-line reason — marked clearly as suggestion)
+어느 것을 선택할까요?
+```
+
+### Type 2: Multi-Choice (3+ options)
+```
+[DESIGN CHOICE] <decision topic>
+Context: ...
+|Option|Description|Pros|Cons|Recommended|
+|------|------|------|------|:---:|
+|A|...|...|...|✓|
+|B|...|...|...||
+|C|...|...|...||
+Recommendation: (reason)
+어느 것을 선택할까요?
+```
+
+### Type 3: Confirmation (Yes/No + Proposal)
+```
+[CONFIRM] <topic>
+Current state: ...
+Proposal: (Agent's recommended direction)
+Rationale: (why this is best)
+대안(No 선택 시): (거절 시 어떻게 되는지)
+Proceed? (Proceed / Alternative / Specify manually)
+```
+
+### Type 4: Range Choice
+```
+[RANGE CHOICE] <topic>
+Context: ...
+Range: (min - max)
+Recommendation: (value with reason)
+What value?
+```
+
+### Type 5: Priority Ordering
+```
+[PRIORITY] Rank these by importance:
+1. ___  <item A>
+2. ___  <item B>
+3. ___  <item C>
+Recommendation: (suggested order with reason)
+```
+
+## §5. Non-Standard Responses
+다음 사용자 응답을 우아하게 처리:
+
+|User says|Agent action|
+|------|------|
+|"I don't know" / "Not sure"|Apply safe default, tag as PARKED, record in DECISIONS.md with [보류] tag. Specify when to revisit.|
+|"Need to consult team"|Same as above. Record who needs to weigh in if mentioned.|
+|"Prototype both"|Switch to PROTOTYPE ESCAPE mode (§9).|
+|"Skip for now"|Apply most conservative default, continue, note in MODIFICATION SUMMARY.|
+|No response (timeout ~5 min)|Continue with DEFERRABLE items. For BLOCKING items, pause and wait.|
+
+### Parked Decision Format
+```
+[PARKED DECISION] <topic>
+Status: Deferred
+Default applied: A (reason: more conservative/safe)
+Revisit point: <when to ask again or user will proactively direct>
+DECISIONS.md에 [보류] 태그로 기록됨
+```
+
+## §6. Reversibility-Based Detail Scaling
+|Reversibility Cost|Detail Level|
+|------|------|
+|Low (variable names, function extraction)|Brief suggestion. 5-min rollback if wrong.|
+|Medium (library choice, DB index)|Full pros/cons table with recommendation.|
+|High (DB schema, language choice, architecture)|Full DESIGN CHOICE format + ADR record + suggest prototype comparison.|
+
+## §7. User Expertise Adaptation
+프로젝트 컨텍스트(DECISIONS.md, Q3 팀 규모)에서 숙련도 추론:
+
+|Level|Style|Example|
+|------|------|------|
+|Expert|Concise|"A (fast) vs B (safe). Recommend: B"|
+|Intermediate|Standard|Pros/cons 2-3 lines + recommendation|
+|Beginner|Detailed|Full explanation + code example + why it matters|
+
+## §8. Preference Learning
+DECISIONS.md의 `## Decision Patterns` 섹션에 결정 패턴 추적:
+```markdown
+## Decision Patterns
+- performance vs readability: consistently chose performance (3/3 times)
+- quick iteration vs thorough design: consistently chose quick (2/2 times)
+```
+
+새 결정이 기존 패턴과 일치할 때:
+```
+이전 결정들을 보면 {X}보다 {Y}를 선호하는 경향이 있습니다.
+{X}로 진행할까요? (예 / 아니요 / 상황에 따라 다름)
+```
+
+## §9. 프로토타입 우회
+결정이 너무 복잡하거나 실제 테스트 없이는 판단이 어려울 때:
+```
+[PROTOTYPE ESCAPE]
+실제 동작을 보지 않고는 판단하기 어려운 결정입니다.
+제안: 양쪽 30분 프로토타입 작성 → 비교 → 결정
+지금 시작할까요? (진행 / A안 확정 / B안 확정)
+```
+
+## §10. 결정 기록
+모든 결정은 반드시 기록:
+
+### ADR Format (for architectural decisions)
+```markdown
+# ADR-NNN: <Title>
+- Status: Accepted
+- Context: (why needed)
+- Decision: (what was chosen)
+- Alternatives: (options + why rejected)
+- Consequences: (tradeoffs)
+- Date: YYYY-MM-DD
+```
+
+### DECISIONS.md Entry (for task-level decisions)
+```markdown
+## YYYY-MM-DD Decision
+- Topic: <what>
+- Options considered: <A, B, C>
+- Chosen: <X>
+- Reason: <why>
+- User: <name>
+- Reversibility: Low / Medium / High
+```
+
+## Principles
+1. Always provide 2-5 options. More than 5 → categorize.
+2. Each option shows BOTH why to choose it AND why not to.
+3. Agent recommendation is always marked as suggestion, never imposed.
+4. Technical judgment → Agent. Value judgment (speed vs stability etc.) → User.
+5. Result of every decision recorded in DECISIONS.md.
+6. Default: never interrupt for reversible decisions. Do it, report it.
+
+## Anti-Patterns
+- "What should we do?" with no options provided
+- 6+ options in a single question
+- "I went ahead and did it" for items requiring user judgment
+- Asking about industry-standard best practices (e.g. "Should we hash passwords?")
+- Re-asking questions already answered in DECISIONS.md

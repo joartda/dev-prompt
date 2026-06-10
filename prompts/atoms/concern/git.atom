@@ -1,0 +1,47 @@
+# Git Concern Atom
+concern: git
+triggers: ["commit", "PR", "branch", "커밋", "브랜치", "merge", "push"]
+load_when: git 작업이 언급될 때
+
+## 브랜치 전략 (기본값: GitHub Flow)
+```
+main (항상 배포 가능)
+├─ feature/<기능명>
+├─ fix/<버그설명>
+└─ docs/<문서변경>
+```
+- `main`에 직접 커밋 금지 (소형 프로젝트 예외)
+- PR: 최소 1인 리뷰 + CI 통과 필수
+
+### 규모별 전략
+|규모|전략|
+|------|------|
+|소형 (Q3.A)|main 직접 푸시 허용, 단일 브랜치, Conventional Commits 권장 (필수 아님)|
+|중형 (Q3.B)|GitHub Flow, 1인 리뷰, CI 필수, Conventional Commits 필수|
+|대형 (Q3.C)|GitFlow (main/develop/feature/release/hotfix), 2인+ 리뷰, 전체 CI, BREAKING CHANGE 필수|
+
+## 커밋 메시지 (Conventional Commits)
+```
+<type>(<scope>): <subject>   ← 50자 이내
+[본문: 변경 이유 및 영향]
+[Footer: Breaking Change / 이슈 링크]
+```
+Types: `feat` · `fix` · `refactor` · `perf` · `test` · `docs` · `chore`
+BREAKING CHANGE: Footer에 반드시 `BREAKING CHANGE: <설명>` 형식으로 기재
+
+## 버전 관리 (Semantic Versioning)
+`MAJOR.MINOR.PATCH`
+- PATCH: 버그 수정
+- MINOR: 하위 호환 새 기능
+- MAJOR: 하위 비호환 변경
+
+## Git 커밋 명령어
+트리거: `git commit with message: <설명>`
+1. 변경된 파일 확인 (.env, 시크릿 없음 확인)
+2. Conventional Commits 형식 메시지 생성
+3. 관련 문서 업데이트 확인
+4. 의도된 파일만 스테이징
+5. 커밋
+
+## .ai.dev/ 파일 커밋
+`.ai.dev/` 파일 수정도 일반 코드와 동일하게 Conventional Commits 형식 사용.

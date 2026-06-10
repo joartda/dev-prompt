@@ -1,0 +1,57 @@
+# 비동기 특화 패턴
+tech: async-patterns
+depends_on: [concern/async]
+
+## 핵심 패턴
+|패턴|설명|적용 시점|
+|------|------|------|
+|async/await|동기 스타일 비동기 코드 — 모든 최신 언어 기본값|
+|gather/all|독립적인 작업의 병렬 완료: `asyncio.gather`, `Promise.all`, `tokio::join!`|
+|Queue/Worker|작업을 큐에 넣고 백그라운드 소비: Celery, BullMQ, Asynq, Oban, Sidekiq|
+|Circuit Breaker|연속 실패 시 차단 후 자동 복구: 외부 API 호출, DB 연결|
+|Retry + 지수 백오프|증가하는 지연 시간 + jitter로 재시도: 일시적 네트워크/DB 장애|
+|Bulkhead|서브시스템별 리소스 격리: 계단식 장애 방지|
+|Backpressure|느린 소비자 보호: 스트림 처리, 이벤트 파이프라인|
+|Lazy/Streaming|필요 시점에 생성, 전체 메모리 로드 금지: 대용량 데이터, 파일 처리|
+|Idempotency Key|비멱등 작업의 안전한 재시도: 결제, 주문 생성|
+|Saga|보상 트랜잭션을 통한 분산 트랜잭션 일관성: 다중 서비스 쓰기|
+|Outbox|원자적 DB 쓰기 + 이벤트 발행: 이벤트 기반 아키텍처|
+|Dead Letter Queue|실패한 메시지를 별도 큐로 분리: 메시지 기반 시스템|
+
+## Circuit Breaker 상태
+```
+CLOSED (정상) → [실패 > 임계값] → OPEN (전체 차단)
+OPEN → [타임아웃 만료] → HALF_OPEN (N개 프로브 허용)
+HALF_OPEN → [성공] → CLOSED
+HALF_OPEN → [실패] → OPEN
+```
+
+## 재시도 전략 결정
+|실패 유형|재시도?|전략|
+|------|:---:|------|
+|네트워크 타임아웃|예|지수 백오프 + jitter|
+|HTTP 429 (Rate Limit)|예|Retry-After 헤더 사용|
+|HTTP 503 (Service Unavailable)|예|지수 백오프|
+|HTTP 400 (Bad Request)|아니오|요청 수정 필요|
+|HTTP 401/403 (Auth)|조건부|토큰 갱신 가능 시에만|
+|DB 데드락|예|짧은 백오프, 3회 재시도|
+|DB 제약 조건 위반|아니오|데이터 수정 필요|
+
+## 언어별 추천 라이브러리
+|언어|Circuit Breaker|Retry|Queue|
+|------|------|------|------|
+|TypeScript|opossum, cockatiel|p-retry, cockatiel|BullMQ, bee-queue|
+|Python|pybreaker, failsafe|tenacity, backoff|Celery, arq, dramatiq|
+|Go|gobreaker, failsafe-go|cenkalti/backoff|Asynq, machinery|
+|Rust|tower (middleware)|backoff, retry|—|
+|Java/Kotlin|Resilience4j|Resilience4j, Failsafe|—|
+|C#|Polly|Polly|Hangfire, MassTransit|
+|Elixir|Fuse|—|Oban, Broadway|
+
+## Backpressure 패턴
+```
+1. 제한된 버퍼: channel/queue에 최대 용량 설정
+2. Drop: 최신 또는 가장 오래된 항목 폐기 (도메인에 따라 선택)
+3. Throttle: 생산자 속도 제한
+4. 전파: backpressure를 upstream으로 전파 (Reactive Streams, Flow)
+```

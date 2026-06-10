@@ -1,0 +1,87 @@
+# 예제 보강 Atom
+augment: examples
+triggers: ["예제", "예시", "샘플", "보여줘"]
+load_when: 작업 복잡도가 구체적인 코드 예제를 필요로 할 때
+
+## 사용법
+다음 상황에서 이 atom을 로드:
+- 작업이 3개 이상의 단계로 구성됨
+- 사용자가 명시적으로 예제를 요청함
+- 추상적인 패턴만으로는 충분하지 않은 생소한 기술
+
+## 예제 형식
+각 예제는 다음을 포함:
+1. 간단한 컨텍스트 (이 예제가 보여주는 것)
+2. 최소한의 실행 가능한 코드 (의사코드가 아닌 실제 코드)
+3. 핵심 포인트 강조
+
+## Language-Specific Templates
+
+### TypeScript
+```typescript
+// Example: Async error handling with timeout
+async function fetchWithTimeout<T>(url: string, timeoutMs: number): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    if (error.name === 'AbortError') throw new Error(`Timeout after ${timeoutMs}ms`);
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+```
+
+### Python
+```python
+# Example: Async error handling with timeout
+import asyncio
+import aiohttp
+
+async def fetch_with_timeout(session: aiohttp.ClientSession, url: str, timeout: float = 5.0):
+    try:
+        async with session.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as resp:
+            resp.raise_for_status()
+            return await resp.json()
+    except asyncio.TimeoutError:
+        raise TimeoutError(f"Request to {url} timed out after {timeout}s")
+    except aiohttp.ClientError as e:
+        raise RuntimeError(f"Request failed: {e}")
+```
+
+### Go
+```go
+// Example: Context with timeout
+func fetchWithTimeout(ctx context.Context, url string, timeout time.Duration) ([]byte, error) {
+    ctx, cancel := context.WithTimeout(ctx, timeout)
+    defer cancel()
+
+    req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+    if err != nil {
+        return nil, fmt.Errorf("creating request: %w", err)
+    }
+
+    resp, err := http.DefaultClient.Do(req)
+    if err != nil {
+        return nil, fmt.Errorf("fetching %s: %w", url, err)
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode >= 400 {
+        return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+    }
+
+    return io.ReadAll(resp.Body)
+}
+```
+
+## 원칙
+1. 예제는 구체적이고 실행 가능해야 함. 의사코드 금지.
+2. 예제당 하나의 개념만 보여줄 것.
+3. 장난감 예제보다 실제 패턴을 우선할 것.
+4. 모든 예제에 에러 처리를 포함할 것.
+5. 개념당 최대 3개 예제 (과부하 방지).

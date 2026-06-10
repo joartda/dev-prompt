@@ -1,0 +1,111 @@
+# Spring Boot 프레임워크 규칙
+## 공식 가이드라인
+- Spring Boot 공식 문서 우선: https://spring.io/projects/spring-boot
+- 엔터프라이즈 표준, 풍부한 생태계
+- 의존성 주입, AOP, 선언적 트랜잭션
+- Java 17+ (Spring Boot 3.x) / Kotlin 지원
+## 프로젝트 구조
+```
+src/main/java/com/example/
+├── Application.java           # @SpringBootApplication (main)
+├── config/                    # 설정 클래스
+│   ├── SecurityConfig.java    # Security 구성
+│   ├── WebConfig.java         # CORS, 인터셉터
+│   └── OpenApiConfig.java     # Swagger/OpenAPI
+├── controller/                # REST 컨트롤러
+│   ├── UserController.java
+│   └── AuthController.java
+├── service/                   # 서비스 레이어 (@Service, @Transactional)
+│   ├── UserService.java
+│   └── impl/                  # 구현 분리
+├── repository/                # 데이터 접근 (Spring Data JPA)
+│   ├── UserRepository.java
+│   └── CustomRepository.java
+├── domain/                    # 도메인 엔티티, VO
+│   ├── User.java
+│   └── entity/
+├── dto/                       # 요청/응답 DTO (+ 검증)
+│   ├── UserRequest.java
+│   └── UserResponse.java
+├── exception/                 # 글로벌 예외 처리
+│   ├── GlobalExceptionHandler.java
+│   └── BusinessException.java
+├── security/                  # Security 구성
+│   ├── JwtTokenProvider.java
+│   └── UserDetailsServiceImpl.java
+└── common/                    # 공통 유틸리티
+    ├── PageResponse.java
+    └── ApiResponse.java
+```
+## 핵심 패턴
+- `@RestController`: REST API 엔드포인트
+- `@Service`: 비즈니스 로직 (트랜잭션 경계)
+- `@Repository`: 데이터 접근 (JPA 예외 변환)
+- 생성자 주입 (필수): `final` 필드 + `@RequiredArgsConstructor` (Lombok)
+- `@Transactional`: 트랜잭션 관리 (`readOnly=true`로 읽기 전용 최적화)
+- `@Valid` + `@Validated`: DTO 검증 (Bean Validation — `@NotNull`, `@Size` 등)
+- `@ControllerAdvice`: 글로벌 예외 처리 (RFC 7807 Problem Details 응답)
+- `@ConfigurationProperties`: 타입 안전 설정 바인딩 (application.yml)
+## 인증 & 보안
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) {
+        http.csrf(AbstractHttpConfigurer::disable)
+            .sessionManagement(sm -> sm.sessionCreationPolicy(STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+}
+```
+## 글로벌 예외 처리
+```java
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(EntityNotFoundException e) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+        return ResponseEntity.status(404).body(pd);
+    }
+}
+```
+## 테스트 패턴
+```java
+// 슬라이스 테스트
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+    @MockBean private UserService userService;
+    @Test void findById_shouldReturnUser() throws Exception {
+        given(userService.findById(1L)).willReturn(new UserResponse("Alice"));
+        mockMvc.perform(get("/api/users/1"))
+               .andExpect(status().isOk());
+    }
+}
+// 통합 테스트
+@SpringBootTest
+@AutoConfigureMockMvc
+class UserIntegrationTest {
+    @Autowired private MockMvc mockMvc;
+    @TestContainer static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
+    @DynamicPropertySource static void props(DynamicPropertyRegistry r) {
+        r.add("spring.datasource.url", postgres::getJdbcUrl);
+    }
+}
+```
+## 주의사항
+- 생성자 주입 권장 (`@Autowired` 필드 주입 지양, 테스트 어려움)
+- `@PostConstruct` / `@PreDestroy`: 초기화/정리 로직
+- `application.yml`로 프로파일별 설정 분리 (application-dev.yml, application-prod.yml)
+- `spring.jpa.open-in-view = false` (OSIV 비활성화 — LazyInitializationException 방지)
+- Flyway/Liquibase로 마이그레이션 자동화 (SQL 형상 관리)
+- `spring-boot-starter-actuator`: 헬스 체크, 메트릭 (`/actuator/health`)
+- `spring-boot-starter-test`: JUnit 5 + Mockito + Testcontainers 통합
+- JPA N+1: `@EntityGraph` 또는 `fetch join`으로 해결
+- Pageable: Spring Data 정렬/페이징 표준 사용 (공격적 쿼리 방지 limit 강제)
+- 빌드: Gradle Kotlin DSL 권장 (`.gradle.kts`), Maven도 가능

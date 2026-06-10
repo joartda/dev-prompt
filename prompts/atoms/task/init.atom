@@ -1,0 +1,96 @@
+# Init Task Atom
+task_types: [init]
+triggers: ["초기화", "시작", "setup", "initialize", "q0", "bootstrap"]
+concerns: [file-management, user-interaction]
+load_priority: 1
+
+## Initialization Procedure
+Trigger: "initialize project" or first run when `.ai.dev/` is missing.
+
+### Execution Order
+```
+Step 1. AGENT_CONFIG.md check
+  → Missing: attempt model self-identification
+           → Success: look up spec → create AGENT_CONFIG.md
+           → Failure: ask user once → create AGENT_CONFIG.md
+  → Exists: load and proceed to Step 2
+
+Step 2. .ai.dev/ folder structure creation
+  → Create .ai.dev/ if missing
+  → Create DECISIONS.md
+  → Create context/ folder for archives
+
+Step 3. Project Questions (Q0~Q16)
+  Ask in groups. NEVER ask all at once.
+  Group 1: Q0 (project type)
+  Group 2: Q1~Q4 (project definition)
+  Group 3: Q5~Q8 (tech stack)
+  Group 4: Q9~Q13 (infra/architecture)
+  Group 5: Q14~Q16 (optional tools)
+  After each group, summarize answers before next group.
+  사용자가 나머지는 기본값으로라고 하면 자동 적용하고 진행.
+
+Step 4. CODEBASE_PROFILE.md check
+  → Missing: "Create codebase profile now?" confirm → execute
+  → Exists: check freshness
+  → New project with <3 files: defer creation
+
+Step 5. Initialization complete report
+  [Initialization Complete]
+  Model: {model_name} ({effective_max:,} tokens)
+  Context compression threshold: {compression_threshold:,} tokens
+  Profile: {exists/missing}
+  Previous context: {exists/missing}
+  Ready for Q0.
+
+### Lightweight Init (small projects)
+DECISIONS.Q3 = A (small) or `initialize project --quick`:
+  - Q0~Q4 only, Q5~Q8 auto-apply defaults
+  - CODEBASE_PROFILE.md deferred until 3+ files exist
+
+## Q0: Project Type
+|Option|Description|
+|--------|------|
+|A. Greenfield|New project from scratch|
+|B. Migration (same stack, version up)|Existing codebase framework/language version upgrade|
+|C. Migration (language/DB swap)|Full rewrite to new stack (Re-platforming)|
+|D. Migration (monolith → MSA)|Split monolith into microservices|
+
+If B/C/D selected, all subsequent questions compare AS-IS vs TO-BE.
+
+## Q1: Project Name & Purpose
+Free text. Used as document title prefix. For migrations, also ask existing service purpose and core reason for switching.
+
+## Q2: Expected User Scale & Traffic
+|Option|Scale|Impact|
+|--------|------|------|
+|A. Small (≤100 concurrent)|Personal, internal tools, MVP|Single server, SQLite/PostgreSQL, caching optional|
+|B. Medium (100-10,000)|Startup, early SaaS|Redis required, horizontal scaling, read replicas|
+|C. Large (10,000+)|Platform, large service|CDN, sharding/clusters, message queues, orchestration|
+|D. Unpredictable / bursty|Campaigns, event-driven|Serverless or auto-scaling preferred|
+
+## Q3: Project Scale (Team & Duration)
+|Option|Criteria|Strategy|
+|--------|------|------|
+|A. Small|1 person, ≤1 week|Minimal docs, 70% coverage, main direct push allowed, monolith|
+|B. Medium|2-5 people, 1-3 months|Standard docs, 80% coverage, GitHub Flow, modular monolith|
+|C. Large|6+ people, >3 months|Full docs, 90%+ coverage, GitFlow, contract tests, hexagonal|
+
+## Q4: Expected Growth Scale
+|Option|Example|Approach|
+|--------|------|------|
+|A. Few features (single purpose)|Event page, internal tool|Layered, test 70%, minimal docs|
+|B. Continuous growth (MVP → maturity)|Startup product, commerce MVP|Modular monolith, core interfaces, test 80%, ADR|
+|C. Large-scale (platform)|Large SaaS, microservice ecosystem|Hexagonal or MSA, test 90%+, full docs, ADR mandatory|
+
+## Q5~Q8: Tech Stack
+Ask after Q1~Q4. For small projects, auto-apply defaults (Python + PostgreSQL + FastAPI).
+See `questions-base.prompt` in old structure for full option tables if needed.
+
+## Q9~Q13: Infrastructure & Architecture
+Ask after Q5~Q8. For small projects, auto-apply defaults.
+See `questions-base.prompt` in old structure for full option tables if needed.
+
+## Q14~Q16: Optional Tools
+Multi-select. Ask after Q9~Q13. For small projects, auto-apply "none".
+See `questions-base.prompt` in old structure for full option tables if needed.

@@ -1,0 +1,109 @@
+# FastAPI 프레임워크 규칙
+## 공식 가이드라인
+- FastAPI 공식 문서 우선: https://fastapi.tiangolo.com
+- Pydantic v2 기반 검증 (v1에서 마이그레이션 주의)
+- Starlette 기반, async 네이티브
+- Python 3.10+ 필수 (타입 힌트, | 연산자)
+## 프로젝트 구조
+```
+app/
+├── main.py              # FastAPI 앱 생성, 라우터 등록
+├── config.py            # 설정 관리 (pydantic-settings)
+├── api/
+│   ├── __init__.py
+│   └── v1/
+│       ├── endpoints/   # 라우트 핸들러 (라우트별 파일 분리)
+│       └── deps.py      # 의존성 주입 (Depends)
+├── core/
+│   ├── security.py      # 인증/인가 (JWT, OAuth2)
+│   ├── database.py      # DB 연결 (async session)
+│   └── middleware.py    # 공통 미들웨어 (CORS, 로깅, 요청ID)
+├── models/              # SQLAlchemy 모델
+├── schemas/             # Pydantic 스키마 (요청/응답)
+├── services/            # 비즈니스 로직 (순수 함수)
+├── tasks/               # 백그라운드 태스크 (Celery/arq)
+└── tests/
+    ├── conftest.py      # fixture, 테스트 DB
+    ├── test_api/        # API 테스트 (TestClient)
+    └── test_services/   # 서비스 로직 테스트
+```
+## 핵심 패턴
+- 의존성 주입: `Depends()` (경로 함수, 중첩 의존성, 클래스 의존성)
+- 검증: Pydantic v2 (`BaseModel`, `Field`, `model_validator`, `field_validator`)
+- DB 세션: `async with SessionLocal() as session` (context manager, 세션 팩토리 패턴)
+- 설정: `pydantic-settings` (`BaseSettings`, `.env` 자동 로드)
+- CORS: `CORSMiddleware` (허용 Origin 명시, `*` 금지)
+- 태스크: `BackgroundTasks` (간단한), Celery/arq (무거운, 비동기 큐)
+- 예외 처리: `HTTPException` + 커스텀 예외 핸들러 (`@app.exception_handler`)
+- 응답: `response_model` + `status_code` 명시
+## 패턴 예제
+### 의존성 주입 (DB 세션)
+```python
+async def get_db():
+    async with SessionLocal() as session:
+        yield session
+
+@router.get("/users/{id}")
+async def get_user(id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == id))
+    return result.scalar_one_or_none()
+```
+### 에러 핸들러
+```python
+class NotFoundError(HTTPException):
+    def __init__(self, detail: str):
+        super().__init__(status_code=404, detail=detail)
+
+@app.exception_handler(NotFoundError)
+async def not_found_handler(request, exc):
+    return JSONResponse(status_code=exc.status_code, content={"error": exc.detail})
+```
+### 백그라운드 태스크
+```python
+@router.post("/send-email")
+async def send_email(email: str, bg: BackgroundTasks):
+    bg.add_task(send_email_async, email)
+    return {"message": "email queued"}
+```
+### WebSocket
+```python
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await websocket.accept()
+    async for data in websocket.iter_text():
+        await websocket.send_text(f"Echo: {data}")
+```
+### 파일 업로드
+```python
+from fastapi import UploadFile, File
+
+@router.post("/upload")
+async def upload(file: UploadFile = File(...)):
+    content = await file.read()
+    return {"filename": file.filename, "size": len(content)}
+```
+## 테스트 패턴
+```python
+from fastapi.testclient import TestClient
+
+def test_read_user(client: TestClient):
+    response = client.get("/users/1")
+    assert response.status_code == 200
+
+# conftest.py
+@pytest.fixture
+def client():
+    app = create_app()  # 테스트용 앱 팩토리
+    with TestClient(app) as c:
+        yield c
+```
+## 주의사항
+- `sync` 경로 함수는 스레드 풀에서 실행 (async와 혼용 시 성능 주의)
+- Pydantic v1에서 v2: `validator` → `field_validator`, `root_validator` → `model_validator`
+- DB ORM: SQLAlchemy 2.0 스타일 (`select()` 기반) 권장, `Query` 스타일 사용 금지
+- `response_model` 사용으로 자동 검증/직렬화
+- `status_code` 명시로 HTTP 상태 코드 문서화
+- OpenAPI 태그로 엔드포인트 그룹화 (`tags=["users"]`)
+- 앱 팩토리 패턴 (`create_app()`)으로 테스트와 설정 분리
+- 모든 DB 세션은 `async with` 컨텍스트 매니저로 관리 (누수 방지)
+- 대규모 프로젝트는 `APIRouter`로 라우터 모듈화 필수

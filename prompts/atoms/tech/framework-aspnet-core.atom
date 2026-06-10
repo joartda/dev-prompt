@@ -1,0 +1,39 @@
+# ASP.NET Core 프레임워크 규칙
+## 공식 가이드라인
+- ASP.NET Core 공식 문서 우선: https://learn.microsoft.com/aspnet/core
+- .NET 표준, 고성능, 크로스 플랫폼
+- Minimal API 또는 Controller 기반 선택 가능
+## 프로젝트 구조
+```
+src/MyApp/
+├── Program.cs               # 진입점, 서비스 등록, 미들웨어 파이프라인
+├── appsettings.json         # 설정 파일
+├── Controllers/             # API 컨트롤러 (Controller 기반)
+├── Endpoints/               # Minimal API 엔드포인트
+├── Services/                # 비즈니스 로직
+├── Data/
+│   ├── AppDbContext.cs      # EF Core DbContext
+│   └── Migrations/          # EF Core 마이그레이션
+├── Models/                  # 도메인 모델
+├── DTOs/                    # 요청/응답 DTO
+├── Middleware/               # 커스텀 미들웨어
+└── Filters/                 # 액션 필터 (예외, 검증)
+```
+## 핵심 패턴
+- 의존성 주입: `builder.Services.AddScoped<IUserService, UserService>()`
+- 미들웨어: `app.UseAuthentication()`, `app.UseAuthorization()`
+- 컨트롤러: `[ApiController]`, `[Route("api/[controller]")]`
+- Minimal API: `app.MapGet("/users/{id}", handler)`
+- EF Core: `DbContext` + `DbSet<T>` + LINQ 쿼리
+- 검증: `FluentValidation` 또는 `DataAnnotations`
+- 설정: `IOptions<T>`, `appsettings.json`
+- 인증: JWT Bearer (`AddAuthentication().AddJwtBearer()`)
+- CORS: `AddCors()` + `UseCors()`
+## 주의사항
+- `builder.Services.AddDbContext<T>(options => options.UseNpgsql(...))`
+- `app.UseHttpsRedirection()` (production 필수)
+- EF Core N+1: `Include()`, `ThenInclude()`로 eager loading
+- Swagger: `AddSwaggerGen()` + `UseSwagger()` + `UseSwaggerUI()`
+- Health Checks: `AddHealthChecks()` + `MapHealthChecks()`
+- `DeveloperExceptionPage`: development에서만 활성화
+- `dotnet ef migrations add`로 마이그레이션 생성

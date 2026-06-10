@@ -1,0 +1,69 @@
+# Migrate Task Atom
+task_types: [migrate, upgrade]
+triggers: ["마이그레이션", "업그레이드", "전환", "migration", "upgrade", "이전"]
+concerns: [approval]
+load_priority: 1
+
+## Migration-Specific Principles
+
+### Migration Types
+|Type|Strategy|
+|------|------|
+|B. Same stack version up|Preserve existing code style. Identify deprecated APIs. Follow official migration guide.|
+|C. Language/DB full swap (Re-platforming)|Analyze AS-IS logic → TDD-based TO-BE tests first → Reimplement in new stack. Never 1:1 translate. Use new stack best practices.|
+|D. Monolith → MSA|Identify bounded contexts first. Use Strangler Fig pattern. API Gateway for gradual routing. Contract tests mandatory. Data separation strategy upfront.|
+
+### Universal Migration Principles
+1. Tests first: secure test coverage of existing logic before starting.
+2. Gradual transition: prefer Strangler Fig over big-bang.
+3. Document everything: all decisions and reasons as ADR in DECISIONS.md.
+4. Rollback plan: every migration step must be reversible.
+5. Parallel operation: design for AS-IS + TO-BE coexistence if needed.
+
+## Migration Commands
+
+### `analyze legacy code in <file/module>`
+1. Analyze AS-IS business logic, hidden dependencies, edge cases
+2. Report current logic problems and improvement opportunities
+3. List expected changes when converting to TO-BE stack
+4. Record analysis in .ai.dev/DECISIONS.md
+
+### `migrate <module> to new stack`
+1. (Mandatory) Create TO-BE tests that verify existing business logic FIRST
+2. Rewrite logic following new language/framework best practices (never 1:1 translate)
+3. Run tests, verify pass
+4. Report migration completion with differences from original
+
+### `generate data migration script for <table>`
+1. Compare AS-IS and TO-BE schemas
+2. Write data type conversion and validation logic
+3. Generate batch ETL migration script
+4. Also generate rollback script
+
+### `migration plan <current> to <target>`
+1. Search official migration guide
+2. Collect Breaking Changes list
+3. Identify affected files
+4. Output step-by-step execution plan
+
+### Phase 3 — Version/Framework Change Checklist
+```
+[VERSION MIGRATION CHECKLIST]
+AS-IS: (detected current version)
+TO-BE: (target version — ask user if unspecified)
+Breaking Changes:
+  1. Deprecated/removed APIs:
+  2. Naming changes: (before → after)
+  3. Dependency changes: (add/remove/version pin)
+  4. Config file changes:
+  5. Behavior changes:
+Uncertain items:
+  - (require official migration guide web search)
+```
+Rule: NEVER proceed with "latest version" without specifying exact version number.
+
+## Additional Migration Questions (after Q0)
+- What is the existing test coverage? (none / partial / sufficient)
+- Must the existing system remain operational during migration? (yes / no / parallel period: __)
+- Prefer gradual (Strangler Fig) or big-bang migration?
+- Keep existing DB or migrate to new DB? (keep / migrate / mixed)

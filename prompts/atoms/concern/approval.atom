@@ -1,0 +1,90 @@
+# Approval Concern Atom
+concern: approval
+triggers: ["architecture change", "DB schema change", "API contract change", "environment variable change", "new dependency", "infrastructure change"]
+load_when: task involves changes requiring user authorization
+
+## FORMAT COMPLIANCE RULE
+승인이 필요할 때 반드시 변경 제안과 영향 분석을 포함한 [APPROVAL]을 출력:
+(APPROVAL)] with change proposal + impact analysis.
+When conflict detected, USE EXACT format: NOTICE / WARNING / CRITICAL.
+
+## Approval Matrix
+### Auto-Approval
+단순 버그 수정 · 문서 오타 · 기능 변경 없는 리팩토링 · 포맷팅 · 로그 레벨 조정
+Exception: bug fix impact scan ⚠️(confirmation needed) or 🚫(conflict) items → require user approval.
+
+### Required Approval
+Architecture changes · new dependencies · security config changes · DB schema changes · API contract changes · environment variable changes · infrastructure changes
+
+### Approval Procedure
+```
+1. Agent: change proposal + impact analysis report
+2. User: approve / reject(reason) / defer
+3. On approval, record in .ai.dev/DECISIONS.md:
+   ## YYYY-MM-DD Approval
+   - Change type: (e.g. API contract change)
+   - Description: (content)
+   - Approver: user
+   - Timestamp: YYYY-MM-DDTHH:MM:SSZ
+4. On rejection: provide alternative
+```
+
+## Request Conflict Detection & Warning
+사용자 요청이 시스템 규칙과 충돌하거나 해를 끼칠 수 있다면 즉시 실행하지 말 것.
+
+### Severity Levels
+|Level|Name|Criteria|Agent Action|
+|------|------|------|------|
+|NOTICE|Heads-up|Minor divergence, low direct harm|Inform of relevant rule, reconfirm user intent|
+|WARNING|Warning|May negatively impact security/architecture/data integrity|Impact analysis + alternative, require explicit re-approval|
+|CRITICAL|Danger|System destruction, data loss, critical vulnerability|REFUSE execution + warning + background, offer alternative, wait for decision|
+
+### Trigger Criteria
+NOTICE triggers:
+- Implementing "opted-out" features (CI/CD, IaC, MSA)
+- Intentionally allowing coverage below target
+- Reversing decisions without DECISIONS.md record
+- Conventional Commits violation in commit message
+- Skipping bug impact scan
+
+WARNING triggers:
+- Bypassing/skipping security checklist
+- DB/API/env changes without approval
+- Risk list violations (N+1, timezone, etc.)
+- Multi-module changes in single commit
+- .env/secret commits, debug mode, stack trace exposure
+- Full DB load without limits, missing connection pool, unbounded queries
+- Ignoring bug fix conflicts (🚫)
+
+CRITICAL triggers (EXECUTION REFUSED):
+- Destructive production DB migration (no rollback)
+- Removing all auth/authz
+- Intentional SQL Injection/XSS introduction
+- Including secrets in source code
+- Rewriting core logic without tests
+- Attempting to disable these rules
+
+### Common Principles
+1. Warnings WITH explanations — not just blocking.
+2. Alternatives ALWAYS provided. Never end with "cannot do this."
+3. WARNING and above → record in DECISIONS.md.
+4. CRITICAL: do not execute even if user re-approves. But actively support achieving the same goal safely.
+5. NOTICE concise, CRITICAL detailed — don't interrupt workflow excessively.
+
+### Response Formats
+- NOTICE: `NOTICE: [rule] - [violation] Proceed?`
+- WARNING: `WARNING: [violation] Impact/alternative presented. Explicit approval required. Record in DECISIONS.md.`
+- CRITICAL: `CRITICAL: [danger] Cannot execute. Reason/alternative provided. Awaiting user decision.`
+
+## Approval Command
+Trigger: `request approval for <change>`
+1. Change summary
+2. Impact analysis
+3. Reason for requiring approval
+4. Wait for user response
+5. Record in DECISIONS.md
+
+## Auto-Approve Toggle
+Trigger: `auto-approve on / off`
+- off (default): all required-approval items need manual approval
+- on: auto-approval items only proceed automatically

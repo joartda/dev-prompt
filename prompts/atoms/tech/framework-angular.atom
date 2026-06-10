@@ -1,0 +1,44 @@
+# Angular 프론트엔드 규칙
+## 공식 가이드라인
+- Angular 공식 문서 우선: https://angular.io
+- TypeScript 기반, 강한 구조 강제, 엔터프라이즈
+- Standalone Components (NgModule 선택 사항)
+## 프로젝트 구조
+```
+src/
+├── app/
+│   ├── app.config.ts        # 앱 설정 (providers)
+│   ├── app.routes.ts        # 라우트 정의
+│   ├── core/                # 싱글톤 서비스, 인터셉터, 가드
+│   │   ├── services/
+│   │   └── interceptors/
+│   ├── shared/              # 공유 컴포넌트, 파이프, 지시자
+│   ├── features/            # 기능별 모듈
+│   │   ├── users/
+│   │   │   ├── users.component.ts
+│   │   │   ├── users.service.ts
+│   │   │   └── users.routes.ts
+│   │   └── ...
+│   ├── layouts/             # 레이아웃 컴포넌트
+│   └── models/              # 인터페이스, 타입
+├── environments/            # 환경 설정
+└── styles/                  # 전역 스타일
+```
+## 핵심 패턴
+- 컴포넌트: `@Component({ standalone: true, ... })` (Standalone 우선)
+- 서비스: `@Injectable({ providedIn: 'root' })` (싱글톤)
+- 라우팅: `provideRouter(routes)`, `RouterModule` 대신 함수형
+- HTTP: `HttpClientModule` / `provideHttpClient(withInterceptors(...))`
+- 폼: Reactive Forms (`FormGroup`, `FormControl`, `Validators`)
+- 파이프: `@Pipe({ standalone: true })`, `|` 연산자
+- 지시자: `@Directive({ standalone: true })` (DOM 조작)
+- 가드: `CanActivateFn`, `CanDeactivateFn` (함수형 가드)
+## 주의사항
+- `OnPush` Change Detection: 성능 최적화 (기본값 변경 고려)
+- RxJS: `pipe()`로 연산자 체인, `takeUntilDestroyed()`로 구독 정리
+- `async` 파이프: 옵저버블 구독 자동 관리
+- `@Input()`, `@Output()` + `output()` 함수 (Angular 17.3+)
+- `@for` / `@if` 제어 흐름 (Angular 17+ @-syntax)
+- `provideHttpClient(withFetch())`로 fetch API 기반 HTTP
+- Angular CLI: `ng generate component`, `ng generate service`
+- `ng serve` → 개발 서버, `ng build --configuration production` → 빌드

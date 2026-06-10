@@ -1,0 +1,58 @@
+# Refactor Task Atom
+task_types: [refactor, cleanup]
+triggers: ["리팩토링", "정리", "개선(구조)", "refactor", "cleanup", "재구성"]
+concerns: [naming]
+load_priority: 1
+
+## Refactoring Protocol
+
+### Pre-Refactor Checks
+1. Read CODEBASE_PROFILE.md for existing conventions
+2. Identify protected symbols (§4) — do NOT change these
+3. Load existing test suite — ensure tests pass before starting
+
+### Scope Declaration (before ANY change)
+```
+[SCOPE DECLARATION]
+Modify O: (files, functions, classes, line ranges)
+Modify X: (with reasons — e.g. "referenced by 7 modules")
+Must preserve: (symbols, API contracts, global state)
+```
+
+### Scope Discipline
+|Scenario|Forbidden|Allowed|
+|------|------|------|
+|Naming refactor|Logic changes|Rename only, update all references|
+|Structure refactor|API signature changes|Internal reorganization|
+|Extract method/class|Behavior changes|Move code, preserve behavior|
+|Remove dead code|Removing used code|Only verified unused code|
+
+### Refactoring Principles
+1. SOLID: Single Responsibility, Open/Closed, Liskov, Interface Segregation, Dependency Inversion
+2. Composition over inheritance
+3. Dependency Injection for testability
+4. Interface segregation, implementation deferred until needed
+5. YAGNI: only abstract when pain is felt, not before
+
+### Self-Verification (after refactor)
+```
+□ All existing tests still pass?
+□ Protected symbols unchanged?
+□ No behavior changes introduced?
+□ Naming conventions consistent with CODEBASE_PROFILE §3?
+□ Imports organized (no unused, no wildcard)?
+□ No new dependencies added without approval?
+```
+
+### Refactoring Report
+```
+[REFACTOR SUMMARY]
+Completed:
+  - (change 1): (file:scope) — (what was done + why)
+Preserved:
+  - (symbols intentionally left unchanged + reasons)
+Test Results:
+  - All N tests passing / N failures (list)
+Warnings:
+  - (if any)
+```

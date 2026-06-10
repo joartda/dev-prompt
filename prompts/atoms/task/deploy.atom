@@ -1,0 +1,64 @@
+# Deploy Task Atom
+task_types: [deploy, release]
+triggers: ["배포", "release", "deploy", "태그", "tag", "publish", "출시"]
+concerns: [git, approval]
+load_priority: 1
+
+## Release Procedure
+Trigger: `create release vX.Y.Z`
+
+### 1. Pre-release Checks
+```
+□ All tests passing?
+□ CHANGELOG.md updated?
+□ Version files updated (package.json, pyproject.toml, etc.)?
+□ Breaking changes documented?
+□ Security scan completed?
+□ No secrets in committed files?
+```
+
+### 2. Version Bump
+Semantic Versioning: `MAJOR.MINOR.PATCH`
+- PATCH: bug fixes
+- MINOR: backward-compatible new features
+- MAJOR: backward-incompatible changes
+
+### 3. Git Tag & Release
+```
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+### 4. Release Notes
+```
+# vX.Y.Z (YYYY-MM-DD)
+## Added
+- Feature 1
+## Changed
+- Change 1
+## Fixed
+- Bug 1
+## Breaking Changes
+- (if any)
+```
+
+### 5. Post-release
+- Verify deployment
+- Monitor error rates for 24hrs
+- Update CHANGELOG.md in main branch
+
+## Docker Setup
+Trigger: `generate docker setup`
+
+1. Multi-stage Dockerfile (build → production)
+2. docker-compose.yml (app + DB + cache + dependencies)
+3. .dockerignore
+
+## CI/CD Pipeline
+Trigger: `generate CI/CD pipeline for <platform>`
+
+1. Detect environment (GitHub Actions / GitLab CI)
+2. Configure stages: lint → test → build → docker → deploy
+3. Integrate secrets from platform secret manager
+4. Include SBOM generation step
+5. Save to .github/workflows/ or .gitlab-ci.yml

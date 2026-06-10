@@ -1,0 +1,76 @@
+# Task Router
+모든 사용자 요청마다 작업을 분류하고 필요한 최소 atom만 선택. 현재 요청에 필요한 것만 로드할 것.
+
+## Step 1: Task Atom Selection (pick exactly 1)
+Match user's request against keyword triggers:
+
+|Keywords|Atom|
+|---|---|
+|초기화, 시작, setup, initialize, q0, bootstrap|`atoms/task/init.atom`|
+|설계, 구조, 아키텍처, ADR, 어떻게 구성, 시스템 디자인|`atoms/task/plan.atom`|
+|만들어, 추가, 구현, 코드, 작성, 생성, 개발, build|`atoms/task/implement.atom`|
+|버그, 고쳐, 안돼, 에러, 오류, 수정, fix, 문제, 디버그|`atoms/task/debug.atom`|
+|테스트, coverage, 단위, 통합, e2e, test, 검증|`atoms/task/test.atom`|
+|리뷰, 검토, 확인, 컨벤션, code review, 점검|`atoms/task/review.atom`|
+|문서, README, API문서, 다이어그램, document, docs, 기록|`atoms/task/document.atom`|
+|배포, release, deploy, 태그, tag, publish, 출시|`atoms/task/deploy.atom`|
+|마이그레이션, 업그레이드, 전환, migration, upgrade, 이전|`atoms/task/migrate.atom`|
+|리팩토링, 정리, 개선(구조), refactor, cleanup, 재구성|`atoms/task/refactor.atom`|
+
+Default: if ambiguous, use `implement.atom`.
+
+## Step 2: Concern Atom Selection (pick 0-5)
+Auto-trigger rules. Load if any condition matches:
+
+|Condition|Atom|
+|---|---|
+|Task is implement, debug, or refactor|`atoms/concern/naming.atom`|
+|Task is test|`atoms/concern/testing-strategy.atom`|
+|Code contains async/Promise/goroutine/coroutine/await|`atoms/concern/async.atom`|
+|Code performs DB write/update/delete/transaction|`atoms/concern/transaction.atom`|
+|Code contains try/catch/throw/Except/Result/error handling|`atoms/concern/error.atom`|
+|Code contains log/logger/console/print|`atoms/concern/logging.atom`|
+|Auth/password/JWT/token/인증/인가/로그인 involved|`atoms/concern/security.atom`|
+|Architecture/DB schema/API contract/environment changes proposed|`atoms/concern/approval.atom`|
+|Performance/speed/optimization/느림/최적화(속도) mentioned|`atoms/concern/perf.atom`|
+|Commit/PR/branch/커밋/브랜치 mentioned|`atoms/concern/git.atom`|
+|Agent detects user must make a design choice (2+ valid approaches)|`atoms/concern/user-interaction.atom`|
+|Exchange count exceeds 15 or user requests compression|`atoms/concern/context-lifecycle.atom`|
+|File operations span multiple directories or new files needed|`atoms/concern/file-management.atom`|
+
+## Step 3: Tech Atom Selection (pick 1-3)
+프로젝트 digest(.ai.dev/DIGEST.md)와 현재 파일의 확장자/경로 기준:
+
+|Trigger|Atom|
+|---|---|
+|Working with *.ts, *.tsx files|`atoms/tech/lang-typescript.atom`|
+|Working with *.py files|`atoms/tech/lang-python.atom`|
+|Working with *.go files|`atoms/tech/lang-go.atom`|
+|Working with *.rs files|`atoms/tech/lang-rust.atom`|
+|Working with *.java, *.kt files|`atoms/tech/lang-java.atom` or `atoms/tech/lang-kotlin.atom`|
+|Working with *.cs files|`atoms/tech/lang-csharp.atom`|
+|Working with *.php files|`atoms/tech/lang-php.atom`|
+|Working with *.ex, *.exs files|`atoms/tech/lang-elixir.atom`|
+|Framework code visible (imports, decorators, config)|Load matching `framework-*.atom`|
+|DB migration/schema/query files|Load matching `db-*.atom`|
+|Distributed/system architecture discussed|`atoms/tech/distributed-patterns.atom`|
+|Large data processing discussed|`atoms/tech/data-processing.atom`|
+|Async patterns discussed (alongside concern/async)|`atoms/tech/async-patterns.atom`|
+|Tooling/IDE/config setup|`atoms/tech/tools.atom`|
+
+프로젝트 digest가 없으면 작업 디렉토리의 파일 확장자로 기술 스택을 추론.
+
+## Step 4: Augment Atom Selection (pick 0-1)
+|Condition|Atom|
+|---|---|
+|Complex task (3+ distinct steps) or user requested examples|`atoms/augment/examples.atom`|
+|User explicitly asked for thorough/careful/꼼꼼히 approach|`atoms/augment/checklist.atom`|
+
+## Loading Rules
+1. `system/identity.prompt` and `system/rules.prompt` are PERMANENT — already in context.
+2. Profile atoms (`greenfield.prompt` / `migration.prompt`) are loaded once during initialization only.
+3. Task atom loads first, then concern atoms, then tech atoms, then augment atoms.
+4. Each atom is loaded by reading the file. Do NOT pre-load atoms speculatively.
+5. After task completion, atom content should be summarized into SUMMARY.md during context compression.
+6. If mid-task a new concern emerges (e.g. security issue discovered during debugging), load additional atoms immediately.
+7. If task changes direction (e.g. implementing turns into debugging), load the new task atom and unload the old one during next compression cycle.

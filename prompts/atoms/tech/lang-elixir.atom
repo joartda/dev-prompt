@@ -1,0 +1,80 @@
+# Elixir 언어 규칙
+## Elixir / Erlang 버전
+- Elixir 1.17+ 권장
+- Erlang/OTP 27+ (JIT 컴파일러 내장)
+- BEAM VM 기반: 액터 모델, 내결함성, 핫 코드 스왑
+## 핵심 라이브러리
+|분류|라이브러리|
+|------|-----------|
+|웹|Phoenix Framework|
+|ORM|Ecto|
+|비동기|GenServer · Task (내장 액터 모델)|
+|실시간|Phoenix Channels · Phoenix LiveView|
+|태스크 큐|Oban|
+|테스트|ExUnit (내장) · Mox · StreamData (프로퍼티 테스트)|
+|정적 분석|Credo · Dialyxir|
+## 비동기 및 병렬 처리 핵심 규칙
+- 모든 프로세스는 경량 BEAM 프로세스 (OS 스레드 아님)
+- GenServer: 상태를 가진 서버 프로세스
+- Task.async / Task.await: 병렬 작업
+- Supervisor tree: 내결함성 계층 구조
+- `send` / `receive`: 프로세스 간 메시지 전달
+- OTP의 `let it crash` 철학: 방어 코드 대신 Supervisor에게 복구 위임
+## 테스트 도구
+|용도|도구|
+|------|------|
+|단위/통합|ExUnit (내장)|
+|목(Mock)|Mox (동시성 안전)|
+|속성 기반|StreamData|
+## 로깅
+|도구|특징|
+|------|------|
+|Logger (내장)|BEAM 내장, 레벨·메타데이터·핸들러|
+|Telemetry|메트릭 수집 파이프라인|
+|AppSignal / Sentry|에러 트래킹|
+## 포맷터 및 린터
+|도구|용도|
+|------|------|
+|mix format|내장 포맷터 (1 정답)|
+|Credo|일관성·컨벤션 린터|
+|Dialyxir|점진적 타입 검사 (성공 타이핑)|
+## 빌드 및 최적화
+- `mix release`: OTP 릴리즈 패키징
+- `mix dialyzer`: 타입 검사
+- BEAM VM 튜닝: `+sbwt`, `+sbwtdcpu`, `+swt`, `+swmt`
+- `Observer` / `:observer.start()`: 실시간 VM 모니터링
+- Phoenix: LiveView로 최소 JS, 실시간 서버 렌더링
+## 보안 도구
+|도구|용도|
+|------|------|
+|Sobelow|Phoenix 보안 정적 분석|
+## 공통 패턴
+```elixir
+# Phoenix: 라우트 + LiveView
+scope "/", MyAppWeb do
+  get "/users", UserController, :index
+  live "/dashboard", DashboardLive
+end
+# GenServer: 상태 관리
+defmodule MyApp.Counter do
+  use GenServer
+  def start_link(initial), do: GenServer.start_link(__MODULE__, initial)
+  def inc(pid), do: GenServer.cast(pid, :increment)
+  @impl true
+  def handle_call(:get, _from, state), do: {:reply, state, state}
+  def handle_cast(:increment, state), do: {:noreply, state + 1}
+end
+# Oban: 비동기 작업
+defmodule MyApp.MailerJob do
+  use Oban.Worker
+  @impl true
+  def perform(%{args: %{"user_id" => id}}) do
+    # 이메일 전송
+    :ok
+  end
+end
+```
+## 프레임워크 가이드라인 우선 원칙
+선택된 프레임워크(Phoenix)의 공식 가이드라인이 일반 규칙보다 우선합니다.
+프로젝트 시작 시 `.ai.dev/FRAMEWORK_GUIDELINES.md`에 핵심 규칙을 요약합니다.
+일반 규칙과 충돌 시 `.ai.dev/DECISIONS.md`에 사유를 기록합니다.

@@ -1,0 +1,57 @@
+# Testing Strategy Concern Atom
+concern: testing-strategy
+triggers: ["test task active"]
+load_when: task is test (auto-included)
+
+## Coverage Targets by Scale
+|Scale|Coverage|Required|Optional|
+|------|------|------|------|
+|Small (Q3.A)|70%|Unit tests|Integration tests, E2E|
+|Medium (Q3.B)|80%|Unit + Integration|3-5 E2E for core user stories|
+|Large (Q3.C)|90%+|Unit + Integration + E2E + Contract|Property-based, Mutation testing|
+
+## Test Hierarchy
+```
+Unit → Integration → E2E → Contract
+  ↓        ↓         ↓       ↓
+속성 기반  스냅샷  시각적  카오스
+```
+
+|Layer|Goal|Key Rule|
+|------|------|------|
+|Unit|Coverage target|Mock ALL external dependencies|
+|Integration|All core flows|Test containers or in-memory DB|
+|E2E|5-10 core user stories|Full run under 2 min|
+|Contract|Service interface verification|Consumer-Driven Contract (Pact)|
+
+## Test Naming Convention
+`given_<condition>_when_<action>_then_<expected>` or `test_<action>_<scenario>_<expected>`
+테스트 이름은 검증 내용을 명확히 전달해야 함.
+
+## Async Test Essentials
+- Race conditions (concurrent access scenarios)
+- Timeouts (async work completes within deadline)
+- Deadlock detection
+- Backpressure (slow consumer + fast producer)
+
+## Language-Specific Test Tools
+|Language|Unit/Integration|Async|Mock|Container|Property|
+|------|------|------|------|------|------|
+|Python|pytest|pytest-asyncio|unittest.mock, pytest-mock|testcontainers-python|Hypothesis|
+|TypeScript|Jest/Vitest|built-in|Jest Mock, MSW|testcontainers-node|fast-check|
+|Go|testing|built-in + `-race`|testify/mock, mockery|testcontainers-go|rapid|
+|Rust|built-in|`#[tokio::test]`|mockall|testcontainers-rust|proptest|
+|Java/Kotlin|JUnit 5|Awaitility|Mockito|Testcontainers|jqwik|
+|C#|xUnit/NUnit|built-in|NSubstitute|Testcontainers .NET|FsCheck|
+|PHP|PHPUnit/Pest|—|Mockery|—|Eris|
+|Elixir|ExUnit|built-in|Mox|—|StreamData|
+
+## Commands
+`generate tests for <file/function> with coverage`:
+Analyze → mock unit tests → async cases → measure coverage → run
+
+`generate integration test for <usecase>`:
+Flow analysis → dependency mapping → container setup → success/failure tests → report
+
+`run tests and fix failures`:
+Run all → collect failures → analyze root cause → fix → re-run until pass

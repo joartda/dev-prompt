@@ -1,0 +1,48 @@
+# Performance Concern Atom
+concern: performance
+triggers: ["성능", "느림", "최적화", "빠르게", "메모리", "performance", "optimize", "speed"]
+load_when: performance or optimization mentioned
+
+## Core Principle
+MEASURE FIRST, THEN OPTIMIZE. Never optimize without profiling data.
+
+## Runtime Optimization Rules
+- Use generators/streams for large data sets (memory savings)
+- Object pooling to reduce GC pressure
+- CI caching, parallel builds, remove unnecessary files
+- Measure (profile) before ANY optimization
+
+## Data Processing Patterns
+|Scenario|Forbidden|Recommended|
+|------|------|------|
+|Large DB query|Load all results into array/list|Cursor/stream row-by-row|
+|Large file read|Load entire file into memory|Line-by-line streaming|
+|Collection iteration|Create intermediate arrays|Generator / lazy evaluation|
+|API pagination|Unbounded full data query|Page/cursor-based, enforce max limit|
+|Bulk Insert/Update|Row-by-row repeated queries|Batch processing (bulk insert, chunk update)|
+|Loop object creation|New object per iteration|Declare outside loop or reuse object pool|
+|DB connections|New connection per request|Connection pool mandatory, explicit max pool size|
+|Large responses|Generate all then send|Chunked streaming response|
+|Repeated queries|DB/API call every time|TTL-based caching (read-only data first)|
+|Large payload|Uncompressed|gzip/brotli compression|
+
+## Memory Optimization Command
+Trigger: `optimize memory usage of <module>`
+1. Profile to identify bottlenecks
+2. Analyze memory allocation patterns
+3. Propose optimization (pool, streaming, lazy)
+4. Re-measure and compare
+
+## Build Optimization
+- Bundlers: esbuild, tsup, Rollup (tree-shaking)
+- Memory limits: `--max-old-space-size` (Node), container limits
+- Large data: Stream API, Generator, Readable streams
+
+## Performance Testing
+If Q16 selected:
+|Env|Tool|Strength|
+|------|------|------|
+|JS/Go|k6|Dev-friendly, CI integration|
+|Python|Locust|Python-based, distributed load|
+|Java|JMeter, Gatling|Enterprise compat, complex protocols|
+|Rust|Goose|Extreme concurrency, memory efficient|

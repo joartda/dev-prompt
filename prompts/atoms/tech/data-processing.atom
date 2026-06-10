@@ -1,0 +1,72 @@
+# 대용량 데이터 처리 패턴
+tech: data-processing
+depends_on: [concern/perf, concern/transaction]
+
+## 필수 패턴
+|상황|금지 패턴|권장 패턴|
+|------|------|------|
+|대용량 DB 조회|전체 결과를 배열/리스트로 적재|커서/스트림 방식 row-by-row|
+|대용량 파일 읽기|파일 전체를 메모리에 로드|line-by-line 스트리밍|
+|컬렉션 순회|중간 배열 생성 후 처리|Generator / 지연 평가(lazy evaluation)|
+|API 페이지네이션|전체 데이터 무제한 조회|페이지/커서 기반, 최대 limit 강제|
+|대량 Insert/Update|row 단위 반복 쿼리|배치 처리 (bulk insert, chunk update)|
+|루프 내 객체 생성|반복마다 새 객체 생성|루프 외부 선언 또는 객체 풀 재사용|
+|DB 커넥션|요청마다 새 커넥션 생성|커넥션 풀 필수, 최대 풀 크기 명시|
+|대용량 응답|전체 생성 후 일괄 전송|청크 단위 스트리밍 응답|
+|반복 조회 데이터|매 요청마다 DB/API 호출|TTL 기반 캐싱 (읽기 전용 데이터 우선)|
+|대용량 전송|비압축 전송|gzip/brotli 압축 적용|
+
+## 청크 크기 휴리스틱
+|데이터 크기|청크 크기|이유|
+|------|------|------|
+|< 1,000 레코드|전체 배치|오버헤드 > 이점|
+|1,000-10,000|500-1,000|대부분의 경우 표준|
+|10,000-100,000|1,000-5,000|메모리와 DB 왕복의 균형|
+|100,000+|5,000-10,000|DB 왕복 최소화, 메모리 주의|
+|스트리밍/실시간|1 또는 작은 윈도우|데이터 도착 시 처리|
+
+## 배치 재처리 전략
+```
+1. 멱등성: 모든 레코드에 고유 키
+2. 체크포인트: 마지막 처리 offset 추적
+3. 재개: 마지막 체크포인트부터 재시도
+4. Dead Letter: 실패한 레코드 → 별도 큐
+5. 알림: Dead Letter 큐 임계값 초과 시 경고
+```
+
+## Exactly-Once 의미론
+- **At-most-once**: 발송 후 확인 없음 (단순, 손실 가능)
+- **At-least-once**: 확인까지 재시도 (안전, 멱등성 필요)
+- **Exactly-once**: 멱등적 쓰기 + 트랜잭셔널 아웃박스 (복잡)
+
+기본값: 멱등성 키를 사용한 at-least-once.
+
+## Backpressure 구현
+```
+생산자 → 버퍼 (제한 있음) → 소비자
+                ↓ (가득 참)
+         Backpressure 신호
+                ↓
+    생산자 속도 저하/중단/차단
+```
+
+언어별 접근법:
+- TypeScript: `highWaterMark` in streams, `ReadableStream` backpressure
+- Python: `asyncio.Queue(maxsize=N)`, reactive streams via `rxpy`
+- Go: buffered channels with `select` for backpressure
+- Java/Kotlin: Reactive Streams (Flow API), RxJava backpressure 전략
+
+## 스트리밍 ETL 패턴
+```
+소스  → 추출  → 변환  → 적재  → 싱크
+ ↓       ↓       ↓       ↓       ↓
+ DB    Chunk   검증   Batch    대상
+ API   by      보강   Insert   DB
+ File  Row     정리   Upsert   큐
+```
+
+## 원칙
+1. 기본값: eager 로드 대신 streaming/chunk/lazy 처리
+2. 측정(프로파일링) 후 최적화
+3. 메모리는 유한 — 항상 명시적 제한 설정
+4. 모든 배치 처리는 체크포인트에서 재개 가능해야 함

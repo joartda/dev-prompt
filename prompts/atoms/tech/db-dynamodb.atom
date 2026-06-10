@@ -1,0 +1,20 @@
+# DynamoDB 규칙
+## 특성
+- AWS 관리형 키-값 + 문서형 NoSQL
+- 서버리스, 무제한 스케일
+- 자동 복제 및 샤딩, 일관성 설정 가능
+- 강한 일관성 vs 최종 일관성 선택 가능
+## 테이블 설계
+- Partition Key (PK): 단일 키 접근 패턴
+- Sort Key (SK): PK 내 정렬/범위 쿼리
+- 단일 테이블 설계 (Single Table Design) 권장
+- GSIs (Global Secondary Index): 추가 접근 패턴
+- LSI (Local Secondary Index): 동일 PK, 다른 SK
+## 주의사항
+- `Scan` 전체 테이블 스캔 금지: `Query` 사용 (PK 기반)
+- `FilterExpression`은 서버 비용 절감 안 함 (데이터는 이미 읽음)
+- WCU/RCU 또는 On-Demand 용량 모드 선택
+- Item 크기 제한: 400KB (대용량 속성은 S3 참조)
+- 트랜잭션: TransactGetItems / TransactWriteItems (5개 항목 제한)
+- 배치: BatchGetItem (100개), BatchWriteItem (25개)
+- 핫 파티션 방지: PK 설계가 중요 (접미사, 복합 키, 쓰기 샤딩)

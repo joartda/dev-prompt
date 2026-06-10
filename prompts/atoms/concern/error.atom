@@ -1,0 +1,62 @@
+# 에러 처리 Concern Atom
+concern: error
+triggers: ["try", "catch", "throw", "Except", "Result", "error handling", "err", "panic", "recover"]
+load_when: 코드에 에러 처리 패턴이 포함되어 있을 때
+
+## REST API 에러 형식 (RFC 7807)
+```json
+{
+  "type": "https://example.com/errors/invalid-input",
+  "title": "Invalid request parameters",
+  "status": 400,
+  "detail": "The 'email' field must be a valid email address",
+  "instance": "/api/users",
+  "trace_id": "abc-123-def"
+}
+```
+
+## GraphQL 에러 형식
+```json
+{
+  "errors": [
+    { "message": "User not found", "extensions": { "code": "NOT_FOUND", "trace_id": "xyz-789" } }
+  ],
+  "data": null
+}
+```
+
+## gRPC 에러 형식
+```protobuf
+// 표준 gRPC 상태 코드와 google.rpc.Status 사용
+// codes: NOT_FOUND (5), INVALID_ARGUMENT (3), INTERNAL (13) 등
+// ErrorInfo를 details에 포함
+```
+
+## 에러 처리 규칙
+- 내부 로깅: 전체 스택 트레이스 + 전체 컨텍스트 기록
+- 외부 응답: 스택 트레이스, 내부 경로, SQL 절대 노출 금지
+- 공통 HTTP 상태 코드: 400 · 401 · 403 · 404 · 409 · 422 · 429(Rate Limit) · 500
+- 에러 코드 일관성: 모든 에러 `type` 또는 `code` 값을 `.ai.dev/ERRORS.md`에 사전 정의하고, 새 코드 추가 전 문서 먼저 업데이트
+
+## 에러 처리 표준화
+트리거: `standardize error handling in <module>`
+
+1. 현재 에러 처리 방식 분석
+2. RFC 7807(REST) / GraphQL / gRPC 형식으로 변환
+3. 에러 응답에서 모든 민감 정보 제거
+4. 모든 비동기 핸들러에 에러 처리 추가
+5. ERRORS.md 업데이트
+
+## 에러 코드 사전
+`.ai.dev/ERRORS.md`에 모든 에러 코드 유지:
+```markdown
+|코드|HTTP 상태|설명|발생 조건|
+|------|------|------|------|
+|INVALID_INPUT|400|요청 검증 실패|잘못된/누락된 파라미터|
+|NOT_FOUND|404|리소스를 찾을 수 없음|ID가 존재하지 않음|
+|UNAUTHORIZED|401|인증 필요|토큰 없음/만료|
+|FORBIDDEN|403|권한 부족|유효한 토큰이나 잘못된 역할|
+|CONFLICT|409|리소스 충돌|중복 unique 필드|
+|RATE_LIMITED|429|너무 많은 요청|Rate limit 초과|
+|INTERNAL|500|서버 내부 오류|처리되지 않은 예외|
+```

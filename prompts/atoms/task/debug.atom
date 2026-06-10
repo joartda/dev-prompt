@@ -1,0 +1,72 @@
+# Debug Task Atom
+task_types: [debug, fix]
+triggers: ["버그", "고쳐", "안돼", "에러", "오류", "수정", "fix", "문제", "디버그"]
+concerns: [naming]
+load_priority: 1
+
+## FORMAT COMPLIANCE RULE
+YOU MUST output bug impact analysis (✅⚠️🚫) BEFORE making any fix.
+반드시 [MODIFICATION SUMMARY]를 완료 후 출력할 것.
+
+## Bug Fix Protocol
+모든 버그 수정에는 전체 영향 분석을 실행해야 함. 단순히 고치는 것만으로는 부족.
+
+### Procedure
+```
+1. Identify fix target
+   - Pinpoint the buggy function/class/property/type.
+
+2. Clarify fix intent
+   - Define root cause and intended behavior in one sentence.
+   - Example: "calculateTax() didn't throw on negative amounts
+     → now throws IllegalArgumentException on negative input"
+
+3. Impact Scan
+   - Collect ALL code referencing the modified symbol (function/class/interface/constant/type)
+   - Scan: direct callers → indirect callers (call chain) → tests → docs (API Reference, ARCHITECTURE.md)
+
+4. Intent Alignment Judgment
+   |Verdict|Criteria|Agent Action|
+   |------|------|------|
+   |Auto-fix|Clearly aligns with fix intent, simple and safe change|Fix automatically, report in summary|
+   |Confirm|Doesn't align with fix intent, or may change existing design|Report to user with reason, get direction|
+   |Conflict|Must work opposite to fix intent (e.g. negative values intentionally allowed in another domain)|Do NOT modify, explicitly report conflict to user|
+
+5. Execute
+   - Auto-fix items immediately.
+   - Report confirm/conflict items to user.
+
+6. Re-run tests
+   - Execute existing tests + new regression tests for all modified code.
+
+7. Document
+   - Record fix intent and blast radius in .ai.dev/DECISIONS.md.
+   - Update API_REFERENCE.md, ARCHITECTURE.md if signatures/behavior changed.
+```
+
+### User Report Format
+```
+버그 수정 영향 보고서
+──────────────────────────────────────────
+Fix target: <function/class name>
+Fix intent: <one-line summary>
+Auto-fixed (N items)
+  - <file:line> — <one-line description>
+Needs confirmation (N items)
+  - <file:line>
+    Why: <how it differs from fix intent>
+    Suggestion: <recommended direction>
+Conflicts — NOT modified (N items)
+  - <file:line>
+    Why: <why this code intentionally works opposite>
+    Action needed: please decide how to handle this
+How to proceed with confirm/conflict items?
+```
+
+### Example
+Bug: `UserService.deactivate(userId)` returns success for already-deactivated users.
+Fix intent: throw `AlreadyInactiveException` when re-deactivating already-inactive users.
+Impact scan:
+- `AdminController.bulkDeactivate()` → calls `deactivate()` in loop → currently ignores errors, exception propagation changes behavior. Needs confirmation.
+- `UserService` unit tests → auto-add exception test cases.
+- `BillingService.cancelSubscription()` → internally calls `deactivate()` but must handle already-inactive users gracefully per domain requirements → CONFLICT. Do not modify. Needs user decision.

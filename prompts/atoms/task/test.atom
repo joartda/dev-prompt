@@ -1,0 +1,88 @@
+# Test Task Atom
+task_types: [test, verify]
+triggers: ["테스트", "coverage", "단위", "통합", "e2e", "test", "검증"]
+concerns: [testing-strategy]
+load_priority: 1
+
+## FORMAT COMPLIANCE RULE
+반드시 커버리지 메트릭이 포함된 테스트 보고서를 아래 네이밍 규칙에 따라 출력할 것.
+
+## Test Generation Workflow
+Trigger: `generate tests for <file/function> with coverage`
+
+### Procedure
+1. Analyze target code (inputs, outputs, edge cases, dependencies)
+2. Generate mock setup for all external dependencies
+3. Write unit tests for:
+   - Happy path (expected input → expected output)
+   - Edge cases (null, empty, boundary values)
+   - Error cases (invalid input → expected error)
+   - Async cases (race conditions, timeouts if applicable)
+4. Run tests → measure coverage → report
+5. If coverage below target: identify uncovered branches → add tests → re-measure
+
+### Integration Test Generation
+Trigger: `generate integration test for <usecase>`
+
+1. Analyze flow (entry point → dependencies → external systems)
+2. Set up test containers or in-memory DB
+3. Write success path test + failure path test
+4. Clean up test data (idempotent)
+5. Report
+
+### 테스트 네이밍 컨벤션
+명확하고 설명적인 이름을 사용. 권장 패턴:
+- `given_<조건>_when_<행동>_then_<기대결과>`
+- `test_<행동>_<시나리오>_<기대결과>` — 이 패턴도 허용
+
+테스트 이름은 검증 내용을 명확히 전달해야 함. `TestCSVErrors` 같은 클래스 단위 그룹화는 함수 수준 네이밍 없이 사용하지 말 것.
+
+## Test Hierarchy
+```
+Unit → Integration → E2E → Contract
+  ↓        ↓         ↓       ↓
+Property  Snapshot  Visual  Chaos
+```
+
+|Layer|Goal|Key Rule|
+|------|------|------|
+|Unit|Coverage target (varies by scale)|Mock all external dependencies|
+|Integration|All core flows|Test containers or in-memory DB|
+|E2E|5-10 core user stories|Full run under 2 min|
+|Contract|Service interface verification|Consumer-Driven Contract (Pact etc.)|
+
+### Advanced Techniques
+|Technique|When|
+|------|------|
+|Property-based|Computation/transform/serialization logic|
+|Snapshot|UI components, API responses, config files|
+|Visual regression|Frontend components, design systems|
+|Mutation testing|Core business logic, periodic quality audits|
+|Chaos engineering|Large distributed systems, high availability|
+
+### Async Test Essentials
+- Race conditions (concurrent access scenarios)
+- Timeouts (async work completes within deadline)
+- Deadlock detection
+- Backpressure (slow consumer + fast producer)
+
+## Language-Specific Test Tools
+|Language|Unit/Integration|Async|Mock|Container|Property|
+|------|------|------|------|------|------|
+|Python|pytest|pytest-asyncio|unittest.mock, pytest-mock|testcontainers-python|Hypothesis|
+|TypeScript|Jest/Vitest|built-in|Jest Mock, MSW|testcontainers-node|fast-check|
+|Go|testing (built-in)|built-in + `-race`|testify/mock, mockery|testcontainers-go|rapid (built-in)|
+|Rust|built-in `#[test]`|`#[tokio::test]`|mockall|testcontainers-rust|proptest|
+|Java/Kotlin|JUnit 5|Awaitility|Mockito|Testcontainers|jqwik|
+|C#|xUnit/NUnit|built-in async|NSubstitute|Testcontainers .NET|FsCheck|
+|PHP|PHPUnit/Pest|—|Mockery|—|Eris|
+|Elixir|ExUnit (built-in)|built-in|Mox|—|StreamData|
+
+## Load & Performance Testing
+If Q16 selected performance testing:
+|Env|Tool|Strength|
+|------|------|------|
+|JS/Go|k6 (Grafana k6)|Dev-friendly (JS scripts), CI integration|
+|Python|Locust|Python-based, distributed load, custom scenarios|
+|Java|JMeter, Gatling|Enterprise legacy compat, complex protocols|
+|Rust|Goose|Extreme concurrency, memory efficient|

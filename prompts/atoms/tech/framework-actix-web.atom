@@ -1,0 +1,33 @@
+# Actix-web 프레임워크 규칙
+## 공식 가이드라인
+- Actix-web 공식 문서 우선: https://actix.rs
+- 최고 성능, 성숙한 Rust 생태계
+- 액터 모델 기반 (actix 라이브러리)
+## 프로젝트 구조
+```
+src/
+├── main.rs              # 진입점
+├── server.rs            # 서버 설정
+├── routes.rs            # 라우트 설정
+├── handlers/            # 요청 핸들러
+├── middleware/           # 미들웨어
+├── services/            # 비즈니스 로직
+├── models/              # 도메인 모델
+├── dto/                 # 요청/응답 DTO
+└── errors.rs            # 에러 타입
+```
+## 핵심 패턴
+- 앱: `HttpServer::new(|| App::new().service(scope))`
+- 라우트: `web::scope("/api").route("/users/{id}", web::get().to(get_user))`
+- Extractor: `Path`, `Query`, `Json`, `web::Data<T>`, `HttpRequest`
+- 응답: `HttpResponse::Ok().json(data)`, `impl Responder`
+- 상태: `web::Data<Arc<AppState>>`로 공유 상태
+- 미들웨어: `App::new().wrap(middleware)` (`Logger`, `Compress`, `Cors`)
+## 주의사항
+- `web::Data<T>`는 내부적으로 `Arc<T>` (복제 없음)
+- `#[actix_web::main]` 매크로로 async main
+- `HttpServer::new()` 클로저는 요청마다 호출되지 않음 (워커당 1회)
+- `actix_rt::spawn`으로 백그라운드 태스크
+- 핸들러는 `Future<Output = Result<impl Responder, Error>>`
+- 커스텀 에러: `actix_web::error::ResponseError` 트레잇 impl
+- `Guard`로 요청 조건부 라우팅 (헤더, 메서드)

@@ -1,0 +1,5 @@
+# Only track the prompt system files
+/*
+!.gitignore
+!/AGENTS.md
+!/prompts/

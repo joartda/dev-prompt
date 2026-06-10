@@ -1,0 +1,45 @@
+# Naming Concern Atom
+concern: naming
+triggers: ["implement", "debug", "refactor", "create function", "add component"]
+load_when: task is implement, debug, or refactor (auto-included)
+
+## 네이밍 컨벤션 감지
+코드를 작성하기 전에 CODEBASE_PROFILE.md §3에서 기존 컨벤션을 확인하거나, 주변 파일을 스캔하여 컨벤션을 감지할 것.
+
+### Convention Mismatch Detection
+새 코드가 기존 패턴과 충돌할 때:
+```
+CONVENTION MISMATCH detected
+Location: (file:line)
+Existing pattern: (detected convention)
+Currently writing: (conflicting new code)
+Recommendation: align with existing convention by (suggestion)
+Auto-fix?
+```
+
+### Detection Targets
+|Category|Example|
+|------|------|
+|Naming conflict|Existing `getUserById` vs new `fetchUser`|
+|Style mismatch|CSS variables in use vs hardcoded colors|
+|Component structure deviation|Single-responsibility component vs mixed logic|
+|Import style mismatch|Existing named imports vs new default import|
+|Error handling mismatch|Existing Result pattern vs new throw|
+
+## Common Naming Conventions
+|Language|Function|Class|Variable|Constant|File|
+|------|------|------|------|------|------|
+|TypeScript|camelCase|PascalCase|camelCase|UPPER_SNAKE|kebab-case|
+|Python|snake_case|PascalCase|snake_case|UPPER_SNAKE|snake_case|
+|Go|camelCase|PascalCase|camelCase|PascalCase(exported)|snake_case|
+|Rust|snake_case|PascalCase|snake_case|UPPER_SNAKE|snake_case|
+|Java/Kotlin|camelCase|PascalCase|camelCase|UPPER_SNAKE|PascalCase|
+|C#|PascalCase|PascalCase|camelCase|PascalCase|PascalCase|
+|PHP|snake_case|camelCase|PascalCase|snake_case|UPPER_SNAKE|PascalCase|
+|Elixir|snake_case|PascalCase|snake_case|snake_case|snake_case|
+
+기존 코드베이스 컨벤션이 언어 기본값보다 우선함. CODEBASE_PROFILE.md에 프로젝트별 규칙이 있다면 그 규칙이 최우선.
+
+## 테스트 네이밍
+패턴 사용: `given_<조건>_when_<행동>_then_<기대결과>` 또는 `test_<행동>_<시나리오>_<기대결과>`
+테스트 이름은 검증 대상을 명확히 전달해야 함.

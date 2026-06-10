@@ -1,0 +1,59 @@
+# 로깅 Concern Atom
+concern: logging
+triggers: ["log", "logger", "console", "print", "trace", "debug log"]
+load_when: 코드에 로깅 패턴이 포함되어 있을 때
+
+## 로그 레벨
+`ERROR` > `WARN` > `INFO` > `DEBUG` > `TRACE`
+
+## 구조화 로그 형식 (JSON)
+```json
+{
+  "timestamp": "2025-01-15T10:30:00Z",
+  "level": "INFO",
+  "module": "auth",
+  "event": "login_failed",
+  "user_id": "u-123",
+  "trace_id": "abc-123",
+  "correlation_id": "xyz-789"
+}
+```
+
+## 비동기 작업 로깅 (필수 필드)
+`job_id` · `event_id` · `correlation_id` · 작업 시작/완료/실패 이벤트 · consumer lag
+
+## 로그 관리 규칙
+|규칙|상세|
+|------|------|
+|파일 순환|최대 1 GB, 30일 보관|
+|민감 정보|절대 로깅 금지 → 마스킹 함수 필수|
+|환경별 레벨|production: INFO 이상 / DEBUG는 동적 활성화만|
+|외부 노출|스택 트레이스·내부 경로·SQL 절대 노출 금지|
+
+## 언어별 라이브러리
+|언어|추천|
+|------|------|
+|Python|structlog · loguru|
+|TypeScript|pino · winston|
+|Go|zap · slog (표준 라이브러리)|
+|Rust|tracing · log|
+|Java/Kotlin|SLF4J + Logback · Log4j2|
+|C#|Serilog · NLog|
+|PHP|Monolog|
+|Elixir|Logger (내장) + Telemetry|
+
+## 관측 가능성 확장 (대규모 시스템)
+대규모 시스템에서는 로그(Logs), 메트릭(Metrics), 분산 추적(Traces) 3가지 연동 필수:
+
+|영역|오픈소스|SaaS|
+|------|------|------|
+|메트릭|Prometheus + Grafana|Datadog, New Relic|
+|분산 추적|Jaeger, Zipkin, Tempo|Datadog APM, Sentry|
+|로그 집계|ELK Stack, Loki|Datadog, Splunk|
+|오류 수집|Sentry (Self-hosted)|Sentry (Cloud)|
+|통합 표준|OpenTelemetry (Otel)|모든 관측 데이터 수집 표준|
+
+## 관측 가능성 필수 규칙
+1. OpenTelemetry: HTTP 헤더(`traceparent`)를 통해 `trace_id`를 서비스 간에 반드시 전파
+2. 에러 중앙화: 단순 콘솔 로그가 아닌 Sentry 등으로 중앙 수집
+3. 골든 시그널: 대시보드에 Latency, Traffic, Errors, Saturation 4대 지표 포함 필수

@@ -1,0 +1,73 @@
+# Plan Task Atom
+task_types: [plan, architect]
+triggers: ["설계", "구조", "아키텍처", "ADR", "어떻게 구성", "시스템 디자인"]
+concerns: [approval, user-interaction]
+load_priority: 1
+
+## 설계 워크플로우
+설계나 계획 요청을 받았을 때:
+
+### 1. 컨텍스트 로드
+- `.ai.dev/DECISIONS.md`에서 기존 결정 확인
+- `.ai.dev/ARCHITECTURE.md`가 있으면 읽기
+- `CODEBASE_PROFILE.md`에서 현재 코드베이스 구조 확인
+
+### 2. 영향 분석
+변경을 제안하기 전:
+```
+[IMPACT ANALYSIS]
+Changed modules: (list)
+Direct dependencies: (list)
+Indirect effects: (list)
+Risk assessment: Low / Medium / High
+```
+
+### 3. 다이어그램 출력
+아키텍처 다이어그램은 Mermaid(권장), PlantUML, D2 사용.
+- 시스템 컨텍스트(C4 Level 1): 새 시스템 전체 개요
+- 컨테이너 다이어그램(C4 Level 2): 서비스 설계
+- 컴포넌트 다이어그램(C4 Level 3): 모듈 설계
+
+### 4. ADR 생성
+중요한 아키텍처 결정이 있을 때:
+```markdown
+# ADR-NNN: <제목>
+- Status: Proposed / Accepted / Deprecated / Superseded
+- Context: (이 결정이 필요한 이유)
+- Decision: (결정 내용)
+- Alternatives considered: (고려한 대안 + 기각 이유)
+- Consequences: (트레이드오프, 긍정적/부정적 영향)
+- Date: YYYY-MM-DD
+```
+`.ai.dev/DECISIONS.md`의 ADR 섹션에 저장.
+
+### 5. 아키텍처 스타일 선택
+Q3(규모)와 Q4(확장) 답변 기준:
+|Scale|Default|Alternative|
+|------|------|------|
+|Small|Layered (Controller-Service-Repository)|—|
+|Medium|Modular Monolith|Hexagonal|
+|Large|Hexagonal (Ports & Adapters)|MSA, Event-driven|
+
+### 6. 프로젝트 유형별 추천
+greenfield 프로파일 기준:
+|Project Type|Language|DB|Framework|Key Libraries|
+|------|------|-----|------|------|
+|REST API (perf)|Go/Rust|PostgreSQL+Redis|Fiber/Axum|sqlx, redis-rs|
+|REST API (productivity)|Python|PostgreSQL|FastAPI|SQLAlchemy, Pydantic, Alembic|
+|GraphQL API|TypeScript|PostgreSQL|NestJS+Apollo|Prisma, DataLoader|
+|Realtime WebSocket|Go/Elixir|Redis|Gin/Phoenix|Phoenix Channels|
+|Fullstack single lang|TypeScript|PostgreSQL|Next.js|Prisma, tRPC, Zod|
+|AI/ML Service|Python|PostgreSQL+pgvector|FastAPI+Celery|LangChain, MLflow, BentoML|
+|Enterprise|Java/Kotlin|PostgreSQL|Spring Boot/Ktor|Hibernate, Resilience4j|
+
+### 7. Methodology Recommendations
+|Methodology|AI Fit|When|
+|--------|:---:|------|
+|TDD|★★★★★|Core logic requiring precision|
+|BDD|★★★★|Complex business rules|
+|DDD|★★★|Domain-knowledge intensive|
+|Clean Architecture|★★★★|Long-term maintenance|
+|Agile/Scrum|★★★★★|Most natural for AI collaboration|
+
+Recommended: TDD + Agile + lightweight Clean Architecture (default).
