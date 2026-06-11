@@ -1,44 +1,82 @@
 # Laravel 프레임워크 규칙
+## 우선 참조
+이 프레임워크의 최신 버전 구조, API, 권장 사항은 반드시 **공식 문서**를 웹 검색하여 확인할 것.
+아래 내용은 참고용이며, 공식 문서와 충돌 시 공식 문서가 우선함.
+
 ## 공식 가이드라인
 - Laravel 공식 문서 우선: https://laravel.com
 - MVC 패턴, Eloquent ORM, Blade 템플릿
-- PHP 생태계 최대 커뮤니티
+- PHP 8.2+ / Laravel 11+ 권장
 ## 프로젝트 구조
+
+> 📌 프로젝트 구조는 프레임워크 버전에 따라 달라질 수 있음. 최신 공식 문서를 우선할 것.
 ```
 app/
 ├── Http/
-│   ├── Controllers/        # 컨트롤러
-│   ├── Middleware/          # 미들웨어
-│   └── Requests/           # 폼 요청 검증
-├── Models/                 # Eloquent 모델
-├── Services/               # 비즈니스 로직
-├── Jobs/                   # 큐 작업
-├── Events/                 # 이벤트
-├── Listeners/              # 리스너
-└── Exceptions/             # 예외 처리
+│   ├── Controllers/         # 컨트롤러 (invoke 가능)
+│   ├── Middleware/           # 미들웨어 (Throttle, Auth, Log)
+│   └── Requests/            # Form Request 검증
+├── Models/                  # Eloquent 모델
+├── Services/                # 비즈니스 로직
+├── Jobs/                    # 큐 작업 (ShouldQueue)
+├── Events/                  # 이벤트 클래스
+├── Listeners/               # 이벤트 리스너
+├── Notifications/           # 알림 (메일, SMS, DB)
+├── Policies/                # 인가 정책 (Gate)
+├── Exceptions/              # 예외 처리 (Handler)
+└── Console/Commands/        # Artisan 커맨드
 routes/
-├── web.php                 # 웹 라우트
-└── api.php                 # API 라우트
+├── web.php                  # 웹 라우트 (session, csrf)
+└── api.php                  # API 라우트 (throttle, token)
 database/
-└── migrations/
-resources/views/            # Blade 템플릿
-config/                     # 설정 파일
+├── migrations/
+├── factories/               # 모델 팩토리 (테스트용)
+└── seeders/                 # 시더
+resources/views/             # Blade 템플릿
+config/                      # 설정 파일
 ```
 ## 핵심 패턴
-- Eloquent: `User::find($id)`, `User::where('email', $email)->first()`
-- 리소스 컨트롤러: `php artisan make:controller UserController --resource`
-- 검증: `StoreUserRequest` (Form Request) 또는 `$request->validate([...])`
-- API 리소스: `UserResource::collection(User::paginate())`
-- 큐: `ProcessPodcast::dispatch($podcast)` (ShouldQueue)
-- 이벤트: `event(new UserRegistered($user))` → 리스너가 처리
-- 정책: `UserPolicy`로 인가 로직
-- 스코프: `scopeActive()` (Eloquent 로컬 스코프)
-## 주의사항
-- N+1 방지: `User::with('posts')->get()` (eager loading)
-- `php artisan make:model -mcf` (모델 + 마이그레이션 + 팩토리 + 컨트롤러)
-- `php artisan optimize`로 설정 캐싱
+- Eloquent: `User::find($id)`, `User::where('email', $email)->first()`, `User::with('posts')->get()`
+- 리소스 컨트롤러: `php artisan make:controller UserController --resource --model=User`
+- Form Request: `php artisan make:request StoreUserRequest` — authorize() + rules() 메서드
+- API Resource: `UserResource::collection(User::paginate())` (응답 변환)
+- 큐: `ProcessPodcast::dispatch($podcast)` + `php artisan queue:work`
+- 이벤트: `event(new UserRegistered($user))` → Listeners가 처리
+- 정책: `php artisan make:policy UserPolicy --model=User` — view/create/update/delete
+- 스코프: `scopeActive()` (Eloquent 로컬 스코프) → `User::active()->get()`
+- 캐싱: `Cache::remember('users', 3600, fn() => User::all())`
+## 테스트 패턴
+```php
+use RefreshDatabase;
+class UserTest extends TestCase {
+    public function test_can_create_user(): void {
+        $response = $this->postJson('/api/users', ['name' => 'Alice', 'email' => 'a@b.com']);
+        $response->assertStatus(201)->assertJsonStructure(['id', 'name']);
+    }
+}
+```
+## Artisan 명령어
+|명령어|용도|
+|------|------|
+|`make:model -mcf`|모델 + 마이그레이션 + 팩토리 + 컨트롤러|
+|`make:controller --resource --api`|API 리소스 컨트롤러|
+|`make:request`|Form Request 검증 클래스|
+|`make:policy`|인가 정책|
+|`route:list`|모든 라우트 목록 확인|
+|`optimize`|설정/라우트/뷰 캐싱|
+|`tinker`|대화형 Shell|
+## 보안
 - `config/app.php`에서 `debug=false` (production)
-- `php artisan route:list`로 라우트 목록 확인
-- `Laravel Telescope`로 로컬 디버깅
-- `Laravel Horizon`으로 Redis 큐 관리
-- Octane: Swoole/RoadRunner로 성능 향상
+- `.env`로 시크릿 관리, 절대 커밋 금지
+- `RateLimiter::for('api', fn() => Limit::perMinute(60))`
+- `php artisan encrypt`로 민감 데이터 암호화
+- `Session::put()`, CSRF 토큰 자동 검증 (web 미들웨어)
+- SQL 인젝션: Eloquent가 자동 방지 — raw query 사용 시 `DB::raw()` 주의
+## 성능
+- N+1 방지: `User::with('posts.comments')->get()` — eager loading 필수
+- `php artisan optimize`로 설정 캐싱 (production)
+- `Laravel Telescope`: 로컬 개발 디버깅
+- `Laravel Horizon`: Redis 큐 관리 대시보드
+- Octane: Swoole/RoadRunner로 성능 10배 향상
+- Lazy Collection: `User::cursor()->each(fn($user) => ...)` — 대용량 처리
+- `php artisan queue:work --queue=high,default` — 큐 우선순위

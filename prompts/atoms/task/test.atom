@@ -18,8 +18,8 @@ Trigger: `generate tests for <file/function> with coverage`
    - Edge cases (null, empty, boundary values)
    - Error cases (invalid input → expected error)
    - Async cases (race conditions, timeouts if applicable)
-4. Run tests → measure coverage → report
-5. If coverage below target: identify uncovered branches → add tests → re-measure
+5. Run tests → measure coverage → report
+6. If coverage below target: identify uncovered branches → add tests → re-measure
 
 ### Integration Test Generation
 Trigger: `generate integration test for <usecase>`

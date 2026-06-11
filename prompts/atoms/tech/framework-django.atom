@@ -1,38 +1,74 @@
 # Django 프레임워크 규칙
+## 우선 참조
+이 프레임워크의 최신 버전 구조, API, 권장 사항은 반드시 **공식 문서**를 웹 검색하여 확인할 것.
+아래 내용은 참고용이며, 공식 문서와 충돌 시 공식 문서가 우선함.
+
 ## 공식 가이드라인
 - Django 공식 문서 우선: https://docs.djangoproject.com
 - Python 3.12+ / Django 5.0+ 권장
 - "Explicit is better than implicit" 원칙
 ## 프로젝트 구조
+
+> 📌 프로젝트 구조는 프레임워크 버전에 따라 달라질 수 있음. 최신 공식 문서를 우선할 것.
 ```
 project/
 ├── config/
-│   ├── settings/        # 분할 설정 (base, local, production)
-│   └── urls.py
-├── apps/
-│   ├── users/           # Django App
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py  # DRF
-│   │   ├── admin.py
+│   ├── settings/          # 분할 설정 (base.py, local.py, production.py)
+│   │   ├── base.py        # 공통 설정
+│   │   ├── local.py       # 개발용
+│   │   └── production.py  # 운영용 (DEBUG=False, SECRET_KEY env)
+│   ├── urls.py
+│   ├── wsgi.py
+│   └── asgi.py
+├── apps/                   # Django App들
+│   ├── users/
+│   │   ├── models.py      # User 모델 (AbstractUser 상속)
+│   │   ├── views.py       # ViewSet 또는 함수형 뷰
+│   │   ├── serializers.py # DRF Serializer
+│   │   ├── admin.py       # 관리자 커스터마이징
+│   │   ├── permissions.py # 커스텀 권한
+│   │   ├── filters.py     # django-filter
+│   │   ├── urls.py        # 앱 라우트
 │   │   └── tests.py
 │   └── ...
 ├── manage.py
 └── requirements.txt
 ```
 ## 핵심 패턴
-- ORM: Django ORM (`QuerySet` lazy evaluation, `select_related`, `prefetch_related`)
-- DRF (Django REST Framework): `ViewSet`, `Serializer`, `Permission`
-- 관리자: `admin.py` 커스터마이징 (검색, 필터, 인라인)
-- 마이그레이션: `python manage.py makemigrations && migrate`
-- 시그널: `post_save`, `pre_delete` (과도한 사용 금지)
-- 태스크: Celery (`@shared_task`)
+- ORM: Django ORM (`QuerySet` 지연 평가, `select_related`, `prefetch_related` 필수)
+- DRF: `ViewSet` + `Serializer` + `Permission` 조합, `@action`으로 커스텀 엔드포인트
+- 관리자: `admin.py`에서 검색(`search_fields`), 필터(`list_filter`), 인라인(`TabularInline`)
+- 마이그레이션: `makemigrations && migrate`, 롤백은 `migrate {app} {이전번호}`
+- 시그널: `post_save`, `pre_delete` (꼭 필요한 경우만, 과도 사용은 로직 추적 어려움)
+- 태스크: Celery (`@shared_task`, `result_backend`, `beat_schedule`)
+- 검증: DRF `Serializer.validate()` 또는 `serializers.ModelSerializer`
+- 인증: `rest_framework_simplejwt` (JWT), `django-allauth` (소셜 로그인)
+## 테스트 패턴
+```python
+from rest_framework.test import APITestCase
+class TestUserAPI(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="test", password="pass")  # 테스트 전용
+        self.client.force_authenticate(user=self.user)
+    def test_list_users_returns_200(self):
+        response = self.client.get("/api/users/")
+        self.assertEqual(response.status_code, 200)
+```
+## 성능 최적화
+- N+1: `select_related` (FK/O2O), `prefetch_related` (M2M, 역참조) 필수
+- `F()` 표현식: race condition 방지 — `Counter.objects.filter(id=1).update(count=F('count')+1)`
+- `@transaction.atomic`: 트랜잭션 경계 명시 (with 블록 권장)
+- 쿼리 카운트: `django-debug-toolbar`로 모니터링
+- `Queryset`는 lazy — 실제 평가 시점 인지, 불필요한 `list()` 변환 금지
+- 인덱스: `db_index=True`, `Meta.indexes`로 복합 인덱스
+- 캐시: `@cache_page`, `django.core.cache`로 Redis 캐싱
 ## 주의사항
-- N+1: `select_related` (FK/O2O), `prefetch_related` (M2M, 역참조)
-- `F()` 표현식: race condition 방지 (원자적 업데이트)
-- `@transaction.atomic`: 트랜잭션 경계
-- `ALLOWED_HOSTS`: production에서 반드시 설정
+- `ALLOWED_HOSTS`: production에서 반드시 설정 (와일드카드 금지)
 - `SECRET_KEY`: production에서 환경 변수로 분리
 - `DEBUG = False`: production 필수
-- 쿼리 카운트: `django-debug-toolbar`로 모니터링
-- `Queryset`는 lazy: 실제 평가 시점 인지
+- `DATABASES`: connection pool 설정 (CONN_MAX_AGE)
+- `STATIC_ROOT` / `MEDIA_ROOT`: production 경로 명확히 구분
+- CSRF: `@csrf_exempt`는 API 엔드포인트에만, 웹뷰는 CSRF 필수
+- CORS: `django-cors-headers` 패키지로 명시적 Origin 설정
+- `TIME_ZONE = 'UTC'`, 저장은 항상 UTC, 표시 시에만 로컬 변환
+- bulk: `bulk_create()`, `bulk_update()`로 대량 작업 최적화

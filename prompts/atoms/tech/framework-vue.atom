@@ -1,37 +1,79 @@
 # Vue 프론트엔드 규칙
+## 우선 참조
+이 프레임워크의 최신 버전 구조, API, 권장 사항은 반드시 **공식 문서**를 웹 검색하여 확인할 것.
+아래 내용은 참고용이며, 공식 문서와 충돌 시 공식 문서가 우선함.
+
 ## 공식 가이드라인
 - Vue 공식 문서 우선: https://vuejs.org
-- Nuxt.js (SSR/SSG)와 함께 사용 가능
+- Nuxt.js (SSR/SSG)와 함께 사용 가능 (Vue 3 + Vite 권장)
 - Composition API 우선 (Options API보다)
+- TypeScript 사용 권장 (`<script setup lang="ts">`)
 ## 프로젝트 구조
+
+> 📌 프로젝트 구조는 프레임워크 버전에 따라 달라질 수 있음. 최신 공식 문서를 우선할 것.
 ```
 src/
 ├── components/             # 컴포넌트
-│   ├── ui/                 # 기본 UI
-│   └── shared/             # 공유 컴포넌트
-├── composables/            # Composition API 훅 (useAuth, useFetch)
+│   ├── ui/                 # 기본 UI (Button, Input, Modal)
+│   ├── shared/             # 공유 (Header, Footer, Layout)
+│   └── features/           # 기능별 (UserCard, OrderTable)
+├── composables/            # Composition API 훅
+│   ├── useAuth.ts          # 인증 로직
+│   ├── useFetch.ts         # API 호출
+│   └── usePagination.ts    # 페이지네이션
 ├── pages/                  # 페이지 (Vue Router)
 ├── stores/                 # Pinia 스토어
-├── layouts/                # 레이아웃
-├── server/                 # Nuxt 서버 (API 라우트)
+│   ├── userStore.ts
+│   └── cartStore.ts
+├── layouts/                # 레이아웃 (default.vue, auth.vue)
+├── server/                 # Nuxt 서버 API 라우트
 ├── utils/                  # 유틸리티
-├── assets/                 # 정적 자원
-└── types/                  # TypeScript 타입
+├── assets/                 # 정적 자원 (이미지, 폰트)
+└── types/                  # TypeScript 타입 정의
 ```
 ## 핵심 패턴
-- Composition API: `<script setup>` + `ref()`, `reactive()`, `computed()`
-- `onMounted()`, `watch()`, `watchEffect()` 생명주기
-- Pinia: `defineStore()` (상태 관리)
+- `<script setup>`: `ref()`, `reactive()`, `computed()`, `watch()` — Composition API 표준
+- `defineProps<{ name: string }>()`: 타입 안전 props (런타임 선언 불필요)
+- `defineEmits<{ (e: 'submit', value: string): void }>()`: 타입 안전 emit
+- `onMounted()`, `watch()`, `watchEffect()`: 생명주기 + 반응형 감시
+- Pinia: `defineStore('counter', () => { const count = ref(0); ... })` — setup 문법
 - Vue Router: `useRouter()`, `useRoute()`, `<RouterView>`
-- 폼: `v-model` 양방향 바인딩
-- 스타일: `<style scoped>` (컴포넌트 캡슐화)
-- 텔레포트: `<Teleport to="body">` (모달, 툴팁)
+- 폼: `v-model` 양방향 + `vee-validate` + `zod` 검증
+- 스타일: `<style scoped>` (컴포넌트 캡슐화), Tailwind CSS, UnoCSS
+## Nuxt.js 특화
+- `useFetch()`, `useAsyncData()`, `useState()`: SSR 데이터 페칭
+- `useHead()`: SEO 메타데이터
+- `navigateTo()`, `useRoute()`: 라우팅
+- `definePageMeta()`: 페이지별 메타, 미들웨어, 레이아웃
+- `server/api/`: 서버 API 라우트 (파일 기반)
+- `server/middleware/`: 서버 미들웨어 (인증, 로깅)
+## 테스트 패턴
+```typescript
+import { mount } from '@vue/test-utils';
+import { describe, it, expect } from 'vitest';
+import UserCard from './UserCard.vue';
+
+describe('UserCard', () => {
+  it('renders user name', () => {
+    const wrapper = mount(UserCard, { props: { name: 'Alice' } });
+    expect(wrapper.text()).toContain('Alice');
+  });
+});
+```
+## 성능 최적화
+- `v-for`에 `:key` 필수 (고유 ID, 인덱스 금지)
+- `computed`는 자동 캐싱 — 의존성 변경 시만 재계산
+- `watch`의 `deep: true`는 성능 주의 (깊은 객체 감시 비용 높음)
+- `v-if`와 `v-for` 동시 사용 금지 (계산된 속성으로 대체)
+- `shallowRef` / `shallowReactive`: 깊은 반응성 불필요 시
+- 비동기 컴포넌트: `defineAsyncComponent(() => import('./heavy.vue'))`
+- 가상 스크롤: `vue-virtual-scroller`로 대용량 리스트
 ## 주의사항
 - `ref()`는 `.value`로 접근 (템플릿에서는 자동 언래핑)
-- `reactive()`는 객체만, `ref()`는 모든 타입
-- `watch()`의 deep 옵션은 성능 주의
-- `computed()`는 readonly, setter 필요 시 `{ get, set }`
-- `v-for`에 `:key` 필수
-- `v-if`와 `v-for` 동시 사용 금지 (계산된 속성으로 대체)
-- Nuxt: `useFetch()`, `useAsyncData()`, `useState()`로 SSR 데이터
-- TypeScript: `defineProps<{ name: string }>()` 타입 추론
+- `reactive()`는 객체만 가능, `ref()`는 모든 타입
+- `computed()`는 읽기 전용 — setter 필요 시 `{ get, set }` 객체
+- `<Teleport to="body">`: 모달, 툴팁 등 포탈 렌더링
+- `<Suspense>`: 비동기 컴포넌트 로딩 상태 처리
+- Nuxt: `useFetch`의 `key` 옵션으로 중복 요청 방지
+- `v-model` 커스텀: `defineModel()` (Vue 3.4+)로 양방향 바인딩
+- `provide` / `inject`: 깊은 props drilling 방지

@@ -30,7 +30,8 @@ YOU MUST output bug impact analysis (✅⚠️🚫) BEFORE making any fix.
    |------|------|------|
    |Auto-fix|Clearly aligns with fix intent, simple and safe change|Fix automatically, report in summary|
    |Confirm|Doesn't align with fix intent, or may change existing design|Report to user with reason, get direction|
-   |Conflict|Must work opposite to fix intent (e.g. negative values intentionally allowed in another domain)|Do NOT modify, explicitly report conflict to user|
+   |Conflict|Must work opposite to fix intent (e.g. negative values intentionally
+ allowed in another domain)|Do NOT modify, explicitly report conflict to user|
 
 5. Execute
    - Auto-fix items immediately.

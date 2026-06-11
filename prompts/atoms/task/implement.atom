@@ -129,4 +129,6 @@ Detection targets: naming conflicts, style mismatch, component structure deviati
 3. Recommend concrete changes with clear reasons.
 4. Ask user: proceed / modify / skip.
 
-Checklist: decision/structure consistency, affected other docs/code, terminology/style/convention alignment, newcomer comprehensibility, insights or repeatable mistakes, backlog needs, CODEBASE_PROFILE.md & SUMMARY.md freshness.
+Checklist: decision/structure consistency, affected other docs/code, terminology/style/convention alignment,
+           newcomer comprehensibility, insights or repeatable mistakes, backlog needs,
+           CODEBASE_PROFILE.md & SUMMARY.md freshness.
